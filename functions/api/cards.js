@@ -84,6 +84,7 @@ export async function onRequestPost({ request, env }) {
         type = ?, name = ?, year_started = ?, age_started = ?, first_course = ?,
         location = ?, handicap = ?, introduced_by = ?, fav_club = ?, story = ?,
         card_color = ?, border_style = ?, photo_url = ?,
+        avatar_id = ?, avatar_color = ?,
         nationality = ?, nationality_code = ?,
         first_course_country = ?, first_course_lat = ?, first_course_lon = ?,
         local_course = ?, local_course_lat = ?, local_course_lon = ?,
@@ -94,6 +95,7 @@ export async function onRequestPost({ request, env }) {
       type, name, yearStarted, body.ageStarted || null, body.firstCourse || null,
       location, body.handicap || null, body.introducedBy || null, body.favClub || null,
       story, body.cardColor || 'green', body.borderStyle || 'gold', body.photoUrl || null,
+      body.avatarId || null, body.avatarColor || null,
       body.nationality || null, body.nationalityCode || null,
       body.firstCourseCountry || null, body.firstCourseLat || null, body.firstCourseLon || null,
       body.localCourse || null, body.localCourseLat || null, body.localCourseLon || null,
@@ -113,18 +115,20 @@ export async function onRequestPost({ request, env }) {
       id, user_id, type, name, year_started, age_started, first_course,
       location, handicap, introduced_by, fav_club, story,
       card_color, border_style, photo_url,
+      avatar_id, avatar_color,
       nationality, nationality_code,
       first_course_country, first_course_lat, first_course_lon,
       local_course, local_course_lat, local_course_lon,
       dream_partner, dream_course,
       org_type, signature_course, member_count, holes, founder
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     cardId, user.id, type, name, yearStarted, body.ageStarted || null,
     body.firstCourse || null, location, body.handicap || null,
     body.introducedBy || null, body.favClub || null, story,
     body.cardColor || 'green', body.borderStyle || 'gold', body.photoUrl || null,
+    body.avatarId || null, body.avatarColor || null,
     body.nationality || null, body.nationalityCode || null,
     body.firstCourseCountry || null, body.firstCourseLat || null, body.firstCourseLon || null,
     body.localCourse || null, body.localCourseLat || null, body.localCourseLon || null,

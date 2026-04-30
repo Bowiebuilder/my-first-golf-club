@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS cards (
   card_color TEXT DEFAULT 'green',
   border_style TEXT DEFAULT 'gold',
   photo_url TEXT,
+  avatar_id TEXT,
+  avatar_color TEXT,
   -- Player extras (added in migration 002)
   nationality TEXT,
   nationality_code TEXT,

@@ -25,10 +25,18 @@ function renderCardHTML(card) {
   // Top 100 badge check
   var hasTop100 = isPlayer && typeof isTop100Course === 'function' && isTop100Course(card.firstCourse);
 
-  // Photo or initials
-  var photoHTML = card.photo
-    ? '<img class="card-photo" src="' + card.photo + '" alt="' + (card.name || '') + '">'
-    : '<div class="card-initials">' + initials + '</div>';
+  // Photo > Avatar > Initials (in priority order)
+  var photoHTML;
+  if (card.photo) {
+    photoHTML = '<img class="card-photo" src="' + card.photo + '" alt="' + (card.name || '') + '">';
+  } else if (card.avatarId && typeof renderAvatarSVG === 'function' && typeof getAvatarColorHex === 'function') {
+    var avColor = getAvatarColorHex(card.avatarColor || 'gold');
+    photoHTML = '<div class="card-avatar-wrap" style="border-color:' + avColor + ';">' +
+                  renderAvatarSVG(card.avatarId, avColor, 100) +
+                '</div>';
+  } else {
+    photoHTML = '<div class="card-initials">' + initials + '</div>';
+  }
 
   // Front stats
   var statsHTML = '';

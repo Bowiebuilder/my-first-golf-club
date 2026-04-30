@@ -293,6 +293,85 @@ function _resetWizard() {
   _showStep(1);
 }
 
+// --- Avatar picker ---
+function _setupAvatarPicker() {
+  var grid = document.getElementById('avatarGrid');
+  var swatches = document.getElementById('avatarColorSwatches');
+  var idHidden = document.getElementById('avatarIdHidden');
+  var colorHidden = document.getElementById('avatarColorHidden');
+  if (!grid || !swatches || !idHidden || !colorHidden) return;
+  if (typeof AVATAR_IDS === 'undefined') return;
+
+  // Render avatar tile for each animal
+  grid.innerHTML = AVATAR_IDS.map(function(id) {
+    var color = getAvatarColorHex(colorHidden.value || 'gold');
+    return '<button type="button" class="avatar-tile" data-avatar="' + id + '" aria-label="' + id + '">' +
+      renderAvatarSVG(id, color, 56) +
+      '<span class="avatar-tile-name">' + id.charAt(0).toUpperCase() + id.slice(1) + '</span>' +
+      '</button>';
+  }).join('');
+
+  // Render color swatches
+  swatches.innerHTML = AVATAR_COLORS.map(function(c) {
+    return '<button type="button" class="avatar-color-swatch' + (c.id === colorHidden.value ? ' active' : '') + '" data-color="' + c.id + '" style="background:' + c.hex + ';" aria-label="' + c.name + '"></button>';
+  }).join('');
+
+  function refreshTileColors() {
+    var color = getAvatarColorHex(colorHidden.value);
+    grid.querySelectorAll('.avatar-tile').forEach(function(btn) {
+      var avId = btn.dataset.avatar;
+      btn.querySelector('svg').remove();
+      btn.insertAdjacentHTML('afterbegin', renderAvatarSVG(avId, color, 56));
+    });
+  }
+
+  grid.addEventListener('click', function(e) {
+    var tile = e.target.closest('.avatar-tile');
+    if (!tile) return;
+    var avId = tile.dataset.avatar;
+    // Toggle: clicking the active tile clears it
+    if (idHidden.value === avId) {
+      idHidden.value = '';
+      grid.querySelectorAll('.avatar-tile').forEach(function(b) { b.classList.remove('active'); });
+    } else {
+      idHidden.value = avId;
+      grid.querySelectorAll('.avatar-tile').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.avatar === avId);
+      });
+    }
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
+  });
+
+  swatches.addEventListener('click', function(e) {
+    var sw = e.target.closest('.avatar-color-swatch');
+    if (!sw) return;
+    colorHidden.value = sw.dataset.color;
+    swatches.querySelectorAll('.avatar-color-swatch').forEach(function(b) {
+      b.classList.toggle('active', b === sw);
+    });
+    refreshTileColors();
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
+  });
+}
+
+// Show/hide avatar picker based on whether a photo is uploaded
+function _toggleAvatarPickerVisibility() {
+  var group = document.getElementById('avatarPickerGroup');
+  if (!group) return;
+  var hasPhoto = !!(window._playerPhotoFile || (typeof playerPhotoData !== 'undefined' && playerPhotoData));
+  group.style.display = hasPhoto ? 'none' : '';
+  // If a photo was uploaded, clear any avatar selection
+  if (hasPhoto) {
+    var idHidden = document.getElementById('avatarIdHidden');
+    if (idHidden && idHidden.value) {
+      idHidden.value = '';
+      var grid = document.getElementById('avatarGrid');
+      if (grid) grid.querySelectorAll('.avatar-tile').forEach(function(b) { b.classList.remove('active'); });
+      if (typeof renderPreviewCard === 'function') renderPreviewCard();
+    }
+  }
+}
+
 // Combine first+last name into the hidden "name" field for backend compatibility
 function _setupFullNameSync() {
   var first = document.querySelector('#playerForm input[name="firstName"]');
@@ -314,7 +393,18 @@ function _initWizard() {
   _populateAgeAndYearDropdowns();
   _populateCountryDropdowns();
   _setupFullNameSync();
+  _setupAvatarPicker();
+  _toggleAvatarPickerVisibility();
   _showStep(1);
+
+  // Re-toggle visibility when a photo is uploaded/removed
+  var photoInput = document.getElementById('playerPhoto');
+  if (photoInput) {
+    photoInput.addEventListener('change', function() {
+      // forms.js handlePhotoUpload sets the file/data; defer one tick so it has run
+      setTimeout(_toggleAvatarPickerVisibility, 50);
+    });
+  }
 }
 
 if (document.readyState === 'loading') {

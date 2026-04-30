@@ -949,6 +949,149 @@ a {
   font-style: italic;
 }
 
+/* ============================================
+   Avatar picker (Step 7 — when no photo)
+   ============================================ */
+.avatar-picker-group {
+  background: var(--cream);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-top: 8px;
+}
+
+.avatar-picker-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.avatar-picker-or {
+  font-family: var(--font-accent);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.avatar-picker-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 480px) {
+  .avatar-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.avatar-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.avatar-tile:hover {
+  border-color: var(--green-light);
+  transform: translateY(-1px);
+}
+
+.avatar-tile.active {
+  border-color: var(--green);
+  background: rgba(26, 94, 58, 0.05);
+  box-shadow: 0 0 0 3px rgba(26, 94, 58, 0.12);
+}
+
+.avatar-tile svg {
+  display: block;
+}
+
+.avatar-tile-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: capitalize;
+}
+
+.avatar-tile.active .avatar-tile-name {
+  color: var(--green);
+}
+
+.avatar-color-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-color-label {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.avatar-color-swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.avatar-color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition);
+}
+
+.avatar-color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.avatar-color-swatch.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+/* Avatar rendered on the card */
+.card-avatar-wrap {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 3px solid var(--card-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.card-avatar-wrap svg {
+  width: 86%;
+  height: 86%;
+}
+
+.card-grid .card-avatar-wrap {
+  width: 80px;
+  height: 80px;
+}
+
 /* Combobox (searchable dropdown with custom entry) */
 .combobox {
   position: relative;
