@@ -83,15 +83,23 @@ export async function onRequestPost({ request, env }) {
       UPDATE cards SET
         type = ?, name = ?, year_started = ?, age_started = ?, first_course = ?,
         location = ?, handicap = ?, introduced_by = ?, fav_club = ?, story = ?,
-        card_color = ?, photo_url = ?, org_type = ?, signature_course = ?,
-        member_count = ?, holes = ?, founder = ?
+        card_color = ?, border_style = ?, photo_url = ?,
+        nationality = ?, nationality_code = ?,
+        first_course_country = ?, first_course_lat = ?, first_course_lon = ?,
+        local_course = ?, local_course_lat = ?, local_course_lon = ?,
+        dream_partner = ?, dream_course = ?,
+        org_type = ?, signature_course = ?, member_count = ?, holes = ?, founder = ?
       WHERE id = ?
     `).bind(
       type, name, yearStarted, body.ageStarted || null, body.firstCourse || null,
       location, body.handicap || null, body.introducedBy || null, body.favClub || null,
-      story, body.cardColor || 'green', body.photoUrl || null, body.orgType || null,
-      body.signatureCourse || null, body.memberCount || null, body.holes || null,
-      body.founder || null, user.card_id
+      story, body.cardColor || 'green', body.borderStyle || 'gold', body.photoUrl || null,
+      body.nationality || null, body.nationalityCode || null,
+      body.firstCourseCountry || null, body.firstCourseLat || null, body.firstCourseLon || null,
+      body.localCourse || null, body.localCourseLat || null, body.localCourseLon || null,
+      body.dreamPartner || null, body.dreamCourse || null,
+      body.orgType || null, body.signatureCourse || null, body.memberCount || null,
+      body.holes || null, body.founder || null, user.card_id
     ).run();
 
     const card = await db.prepare('SELECT * FROM cards WHERE id = ?').bind(user.card_id).first();
@@ -101,17 +109,28 @@ export async function onRequestPost({ request, env }) {
   // Create new card
   const cardId = generateId();
   await db.prepare(`
-    INSERT INTO cards (id, user_id, type, name, year_started, age_started, first_course,
-      location, handicap, introduced_by, fav_club, story, card_color, photo_url,
-      org_type, signature_course, member_count, holes, founder)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO cards (
+      id, user_id, type, name, year_started, age_started, first_course,
+      location, handicap, introduced_by, fav_club, story,
+      card_color, border_style, photo_url,
+      nationality, nationality_code,
+      first_course_country, first_course_lat, first_course_lon,
+      local_course, local_course_lat, local_course_lon,
+      dream_partner, dream_course,
+      org_type, signature_course, member_count, holes, founder
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     cardId, user.id, type, name, yearStarted, body.ageStarted || null,
     body.firstCourse || null, location, body.handicap || null,
     body.introducedBy || null, body.favClub || null, story,
-    body.cardColor || 'green', body.photoUrl || null, body.orgType || null,
-    body.signatureCourse || null, body.memberCount || null, body.holes || null,
-    body.founder || null
+    body.cardColor || 'green', body.borderStyle || 'gold', body.photoUrl || null,
+    body.nationality || null, body.nationalityCode || null,
+    body.firstCourseCountry || null, body.firstCourseLat || null, body.firstCourseLon || null,
+    body.localCourse || null, body.localCourseLat || null, body.localCourseLon || null,
+    body.dreamPartner || null, body.dreamCourse || null,
+    body.orgType || null, body.signatureCourse || null, body.memberCount || null,
+    body.holes || null, body.founder || null
   ).run();
 
   // Link card to user
