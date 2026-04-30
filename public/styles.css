@@ -3500,6 +3500,23 @@ a {
   margin-bottom: 16px;
 }
 
+.footer-credits {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 14px;
+  letter-spacing: 0.02em;
+}
+
+.footer-credits a {
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.2);
+}
+
+.footer-credits a:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .footer-links {
   display: flex;
   gap: 24px;
