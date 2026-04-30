@@ -38,19 +38,144 @@ export function generateToken() {
 }
 
 // --- Clerk JWT verification ---
-// Verifies the Bearer token from Clerk using their JWKS endpoint
-async function verifyClerkToken(token, secretKey) {
-  // Decode the JWT header to get the key ID
+// Properly verifies a Clerk-issued JWT:
+//   1. Parses header + payload
+//   2. Validates exp / nbf / iss
+//   3. Fetches Clerk's JWKS (cached) and finds the matching key by `kid`
+//   4. Verifies the RS256 signature using Web Crypto
+
+// In-memory JWKS cache (per Worker isolate). Cache for 1 hour.
+const _jwksCache = { data: null, fetchedAt: 0 };
+const JWKS_TTL_MS = 60 * 60 * 1000;
+
+// Base64url -> Uint8Array
+function b64urlToBytes(b64url) {
+  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(b64url.length / 4) * 4, '=');
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+// Base64url -> JSON
+function b64urlToJson(b64url) {
+  const bytes = b64urlToBytes(b64url);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+// Resolve the JWKS URL for this Clerk instance.
+// Priority: env.CLERK_JWKS_URL > env.CLERK_ISSUER + "/.well-known/jwks.json" > derive from token issuer
+function resolveJwksUrl(env, issuer) {
+  if (env && env.CLERK_JWKS_URL) return env.CLERK_JWKS_URL;
+  if (env && env.CLERK_ISSUER) return env.CLERK_ISSUER.replace(/\/+$/, '') + '/.well-known/jwks.json';
+  if (issuer) return issuer.replace(/\/+$/, '') + '/.well-known/jwks.json';
+  return null;
+}
+
+async function fetchJwks(jwksUrl) {
+  const now = Date.now();
+  if (_jwksCache.data && (now - _jwksCache.fetchedAt) < JWKS_TTL_MS) {
+    return _jwksCache.data;
+  }
+  const res = await fetch(jwksUrl, { cf: { cacheTtl: 3600, cacheEverything: true } });
+  if (!res.ok) throw new Error('Failed to fetch JWKS: ' + res.status);
+  const jwks = await res.json();
+  _jwksCache.data = jwks;
+  _jwksCache.fetchedAt = now;
+  return jwks;
+}
+
+async function importJwk(jwk) {
+  return crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['verify']
+  );
+}
+
+async function verifyClerkToken(token, env) {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
 
-  const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
-  const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+  let header, payload;
+  try {
+    header = b64urlToJson(parts[0]);
+    payload = b64urlToJson(parts[1]);
+  } catch {
+    return null;
+  }
 
-  // Check expiry
-  if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+  // Algorithm must be RS256 (Clerk's default)
+  if (header.alg !== 'RS256' || !header.kid) return null;
 
-  // For Clerk, the 'sub' claim is the user ID
+  const now = Math.floor(Date.now() / 1000);
+
+  // exp / nbf / iat checks (with 30s clock skew)
+  const skew = 30;
+  if (payload.exp && payload.exp + skew < now) return null;
+  if (payload.nbf && payload.nbf - skew > now) return null;
+
+  // Issuer check (if configured)
+  const expectedIssuer = env && env.CLERK_ISSUER ? env.CLERK_ISSUER.replace(/\/+$/, '') : null;
+  if (expectedIssuer && payload.iss !== expectedIssuer) return null;
+
+  // Issuer sanity: must look like a Clerk instance URL
+  if (!payload.iss || !/^https:\/\/[^/]+/.test(payload.iss)) return null;
+
+  // Fetch JWKS
+  const jwksUrl = resolveJwksUrl(env, payload.iss);
+  if (!jwksUrl) return null;
+
+  let jwks;
+  try {
+    jwks = await fetchJwks(jwksUrl);
+  } catch {
+    return null;
+  }
+
+  const jwk = (jwks.keys || []).find(k => k.kid === header.kid);
+  if (!jwk) {
+    // Bust cache once in case keys rotated, retry
+    _jwksCache.data = null;
+    try {
+      jwks = await fetchJwks(jwksUrl);
+    } catch {
+      return null;
+    }
+    const jwk2 = (jwks.keys || []).find(k => k.kid === header.kid);
+    if (!jwk2) return null;
+    return verifyWithJwk(parts, payload, jwk2);
+  }
+
+  return verifyWithJwk(parts, payload, jwk);
+}
+
+async function verifyWithJwk(parts, payload, jwk) {
+  let key;
+  try {
+    key = await importJwk(jwk);
+  } catch {
+    return null;
+  }
+
+  const data = new TextEncoder().encode(parts[0] + '.' + parts[1]);
+  const signature = b64urlToBytes(parts[2]);
+
+  let valid = false;
+  try {
+    valid = await crypto.subtle.verify(
+      { name: 'RSASSA-PKCS1-v1_5' },
+      key,
+      signature,
+      data
+    );
+  } catch {
+    return null;
+  }
+
+  if (!valid) return null;
   return payload;
 }
 
@@ -63,7 +188,7 @@ export async function getAuthUser(request, db, env) {
   const token = match[1];
   let clerkPayload;
   try {
-    clerkPayload = await verifyClerkToken(token, env ? env.CLERK_SECRET_KEY : null);
+    clerkPayload = await verifyClerkToken(token, env || {});
   } catch (e) {
     return null;
   }
