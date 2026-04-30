@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My First Golf Club - Where Every Golf Story Begins</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ===== NAVIGATION ===== -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" onclick="showSection('hero'); return false;">
+        <img src="logo.png" alt="My First Golf Club" class="nav-logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="#" onclick="showSection('hero'); return false;" class="nav-link active" data-section="hero">Home</a>
+        <a href="#" onclick="showSection('submit'); return false;" class="nav-link" data-section="submit">Create Card</a>
+        <a href="#" onclick="showSection('community'); return false;" class="nav-link" data-section="community">Community</a>
+        <a href="#" onclick="showSection('top100'); return false;" class="nav-link" data-section="top100">Top 100</a>
+        <a href="#" onclick="showSection('about'); return false;" class="nav-link" data-section="about">About</a>
+      </div>
+      <div class="nav-right">
+        <!-- Logged Out State -->
+        <div class="nav-auth" id="navLoggedOut">
+          <button class="btn btn-ghost btn-sm" onclick="openAuth('signin')">Sign In</button>
+          <button class="btn btn-primary btn-sm" onclick="openAuth('signup')">Join</button>
+        </div>
+        <!-- Logged In State -->
+        <div class="nav-user" id="navLoggedIn" style="display:none;">
+          <div class="nav-avatar-wrapper" onclick="toggleUserDropdown()">
+            <div class="nav-avatar" id="navAvatar"></div>
+            <div class="nav-dropdown" id="navDropdown">
+              <a href="#" onclick="showSection('clubhouse'); closeUserDropdown(); return false;">My Clubhouse</a>
+              <a href="#" onclick="openRoundModal(); closeUserDropdown(); return false;">Log a Round</a>
+              <a href="#" class="nav-dropdown-divider"></a>
+              <a href="#" onclick="handleSignOut(); return false;">Sign Out</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="nav-mobile-toggle" onclick="toggleMobileNav()" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="nav-mobile" id="navMobile">
+      <a href="#" onclick="showSection('hero'); toggleMobileNav(); return false;">Home</a>
+      <a href="#" onclick="showSection('submit'); toggleMobileNav(); return false;">Create Card</a>
+      <a href="#" onclick="showSection('community'); toggleMobileNav(); return false;">Community</a>
+      <a href="#" onclick="showSection('top100'); toggleMobileNav(); return false;">Top 100</a>
+      <a href="#" onclick="showSection('about'); toggleMobileNav(); return false;">About</a>
+      <div class="nav-mobile-auth" id="navMobileLoggedOut">
+        <a href="#" onclick="openAuth('signin'); toggleMobileNav(); return false;">Sign In</a>
+        <a href="#" onclick="openAuth('signup'); toggleMobileNav(); return false;">Join the Club</a>
+      </div>
+      <div class="nav-mobile-user" id="navMobileLoggedIn" style="display:none;">
+        <a href="#" onclick="showSection('clubhouse'); toggleMobileNav(); return false;">My Clubhouse</a>
+        <a href="#" onclick="openRoundModal(); toggleMobileNav(); return false;">Log a Round</a>
+        <a href="#" onclick="handleSignOut(); toggleMobileNav(); return false;">Sign Out</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== AUTH MODAL ===== -->
+  <div class="modal-overlay" id="authModal" style="display:none;">
+    <div class="modal modal-auth">
+      <button class="modal-close" onclick="closeAuth()">&times;</button>
+      <h3 class="modal-title" id="authModalTitle">Join the Club</h3>
+
+      <!-- Sign Up Form -->
+      <form id="signupForm" onsubmit="return handleAuth(event, 'signup')">
+        <div class="form-group">
+          <label>Full Name <span class="required">*</span></label>
+          <input type="text" name="fullName" required placeholder="e.g. Tiger Woods" maxlength="50">
+        </div>
+        <div class="form-group">
+          <label>Email <span class="required">*</span></label>
+          <input type="email" name="email" required placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" name="password" required placeholder="Create a password" minlength="6">
+        </div>
+        <div class="form-group">
+          <label>Confirm Password <span class="required">*</span></label>
+          <input type="password" name="confirmPassword" required placeholder="Confirm your password" minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-full">Join the Club</button>
+        <p class="auth-toggle">Already a member? <a href="#" onclick="toggleAuthMode('signin'); return false;">Sign In</a></p>
+      </form>
+
+      <!-- Sign In Form -->
+      <form id="signinForm" style="display:none;" onsubmit="return handleAuth(event, 'signin')">
+        <div class="form-group">
+          <label>Email <span class="required">*</span></label>
+          <input type="email" name="email" required placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" name="password" required placeholder="Your password" minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-full">Sign In</button>
+        <p class="auth-toggle">Not a member yet? <a href="#" onclick="toggleAuthMode('signup'); return false;">Join the Club</a></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== HERO SECTION ===== -->
+  <section class="section hero-section" id="section-hero">
+    <div class="hero-bg">
+      <div class="hero-pattern"></div>
+    </div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Est. 2026 &bull; The Golf Origin Registry</p>
+      <h1 class="hero-title">
+        Every golfer remembers<br>
+        <span class="hero-title-accent">their first club.</span>
+      </h1>
+      <p class="hero-subtitle">
+        Create your collector's card, log your rounds, earn badges, and join a global community of golfers, clubs, and organizations
+        preserving the moment their journey on the fairway began.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" onclick="showSection('submit')">
+          Create Your Card
+          <span class="btn-arrow">&rarr;</span>
+        </button>
+        <button class="btn btn-ghost btn-lg" onclick="showSection('community')">
+          Browse the Community
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-number" id="statPlayers">0</span>
+          <span class="hero-stat-label">Player Cards</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-number" id="statOrgs">0</span>
+          <span class="hero-stat-label">Club Cards</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-number" id="statCountries">0</span>
+          <span class="hero-stat-label">Countries</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating preview cards -->
+    <div class="hero-card-preview">
+      <div class="floating-card floating-card-1">
+        <div class="mini-card mini-card-player">
+          <div class="mini-card-badge">PLAYER</div>
+          <div class="mini-card-avatar">JD</div>
+          <div class="mini-card-name">James D.</div>
+          <div class="mini-card-year">Since 1998</div>
+        </div>
+      </div>
+      <div class="floating-card floating-card-2">
+        <div class="mini-card mini-card-org">
+          <div class="mini-card-badge">CLUB</div>
+          <div class="mini-card-avatar">RC</div>
+          <div class="mini-card-name">Royal Cape GC</div>
+          <div class="mini-card-year">Est. 1885</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SUBMIT / CREATE CARD SECTION ===== -->
+  <section class="section submit-section" id="section-submit" style="display:none;">
+    <div class="submit-container">
+      <div class="submit-header">
+        <h2 class="section-title">Create Your Playing Card</h2>
+        <p class="section-subtitle">Tell the story of how your golf journey began. Your card will join our global community of origin stories.</p>
+      </div>
+
+      <!-- Card Type Toggle -->
+      <div class="card-type-toggle">
+        <button class="type-btn active" id="typePlayer" onclick="setCardType('player')">
+          <span class="type-icon">&#9971;</span>
+          <span class="type-label">Player Card</span>
+          <span class="type-desc">For individuals</span>
+        </button>
+        <button class="type-btn" id="typeOrg" onclick="setCardType('org')">
+          <span class="type-icon">&#127969;</span>
+          <span class="type-label">Club Card</span>
+          <span class="type-desc">For organizations</span>
+        </button>
+      </div>
+
+      <div class="submit-layout">
+        <!-- FORM SIDE -->
+        <div class="form-side">
+          <!-- Player Form -->
+          <form id="playerForm" class="card-form" onsubmit="return submitCard(event, 'player')">
+            <div class="form-group">
+              <label>Full Name <span class="required">*</span></label>
+              <input type="text" name="name" required placeholder="e.g. Tiger Woods" maxlength="50">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Year Started <span class="required">*</span></label>
+                <input type="number" name="yearStarted" required placeholder="e.g. 1995" min="1800" max="2026">
+              </div>
+              <div class="form-group">
+                <label>Age When Started</label>
+                <input type="number" name="ageStarted" placeholder="e.g. 12" min="1" max="120">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>First Course Played <span class="required">*</span></label>
+              <input type="text" name="firstCourse" required placeholder="e.g. St Andrews Old Course" maxlength="60">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Location / Country <span class="required">*</span></label>
+                <input type="text" name="location" required placeholder="e.g. Cape Town, South Africa" maxlength="50">
+              </div>
+              <div class="form-group">
+                <label>Current Handicap</label>
+                <input type="text" name="handicap" placeholder="e.g. 18 or Beginner" maxlength="20">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Who Introduced You to Golf?</label>
+              <input type="text" name="introducedBy" placeholder="e.g. My grandfather, a school coach..." maxlength="60">
+            </div>
+            <div class="form-group">
+              <label>Favorite Club</label>
+              <div class="club-selector">
+                <label class="club-option"><input type="radio" name="favClub" value="Driver"><span>Driver</span></label>
+                <label class="club-option"><input type="radio" name="favClub" value="Iron"><span>Iron</span></label>
+                <label class="club-option"><input type="radio" name="favClub" value="Wedge"><span>Wedge</span></label>
+                <label class="club-option"><input type="radio" name="favClub" value="Putter"><span>Putter</span></label>
+                <label class="club-option"><input type="radio" name="favClub" value="Hybrid"><span>Hybrid</span></label>
+                <label class="club-option"><input type="radio" name="favClub" value="Wood"><span>Wood</span></label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Your Golf Origin Story <span class="required">*</span></label>
+              <textarea name="story" required placeholder="Tell us about the moment you first picked up a golf club. What do you remember? What hooked you?" maxlength="280" rows="3"></textarea>
+              <span class="char-count"><span id="playerCharCount">0</span>/280</span>
+            </div>
+            <div class="form-group">
+              <label>Profile Photo</label>
+              <div class="photo-upload" id="playerPhotoUpload">
+                <input type="file" accept="image/*" id="playerPhoto" onchange="handlePhotoUpload(this, 'player')" hidden>
+                <div class="photo-placeholder" onclick="document.getElementById('playerPhoto').click()">
+                  <span class="photo-icon">&#128247;</span>
+                  <span>Click to upload</span>
+                </div>
+                <img class="photo-preview" id="playerPhotoPreview" alt="Preview" style="display:none;" onclick="document.getElementById('playerPhoto').click()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Card Color</label>
+              <div class="color-selector">
+                <label class="color-option"><input type="radio" name="cardColor" value="green" checked><span class="color-swatch color-green"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="navy"><span class="color-swatch color-navy"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="maroon"><span class="color-swatch color-maroon"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="black"><span class="color-swatch color-black"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="royal"><span class="color-swatch color-royal"></span></label>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-full">
+              Submit Your Player Card &rarr;
+            </button>
+          </form>
+
+          <!-- Organization Form -->
+          <form id="orgForm" class="card-form" style="display:none;" onsubmit="return submitCard(event, 'org')">
+            <div class="form-group">
+              <label>Organization Name <span class="required">*</span></label>
+              <input type="text" name="name" required placeholder="e.g. Royal Cape Golf Club" maxlength="50">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Year Established <span class="required">*</span></label>
+                <input type="number" name="yearStarted" required placeholder="e.g. 1885" min="1400" max="2026">
+              </div>
+              <div class="form-group">
+                <label>Type <span class="required">*</span></label>
+                <select name="orgType" required>
+                  <option value="">Select type...</option>
+                  <option value="Golf Club">Golf Club</option>
+                  <option value="Corporate">Corporate / Company</option>
+                  <option value="Academy">Golf Academy</option>
+                  <option value="Association">Association / Federation</option>
+                  <option value="Resort">Golf Resort</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Location / Country <span class="required">*</span></label>
+              <input type="text" name="location" required placeholder="e.g. Cape Town, South Africa" maxlength="50">
+            </div>
+            <div class="form-group">
+              <label>Signature Course</label>
+              <input type="text" name="signatureCourse" placeholder="e.g. The Links at Royal Cape" maxlength="60">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Number of Members</label>
+                <input type="text" name="memberCount" placeholder="e.g. 1,200" maxlength="20">
+              </div>
+              <div class="form-group">
+                <label>Number of Holes</label>
+                <select name="holes">
+                  <option value="">Select...</option>
+                  <option value="9">9 Holes</option>
+                  <option value="18">18 Holes</option>
+                  <option value="27">27 Holes</option>
+                  <option value="36">36 Holes</option>
+                  <option value="54">54+ Holes</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Key Figure / Founder</label>
+              <input type="text" name="founder" placeholder="e.g. Sir George Grey" maxlength="60">
+            </div>
+            <div class="form-group">
+              <label>Origin Story <span class="required">*</span></label>
+              <textarea name="story" required placeholder="How did this organization's golf journey begin? What's the founding story?" maxlength="280" rows="3"></textarea>
+              <span class="char-count"><span id="orgCharCount">0</span>/280</span>
+            </div>
+            <div class="form-group">
+              <label>Logo / Photo</label>
+              <div class="photo-upload" id="orgPhotoUpload">
+                <input type="file" accept="image/*" id="orgPhoto" onchange="handlePhotoUpload(this, 'org')" hidden>
+                <div class="photo-placeholder" onclick="document.getElementById('orgPhoto').click()">
+                  <span class="photo-icon">&#128247;</span>
+                  <span>Click to upload</span>
+                </div>
+                <img class="photo-preview" id="orgPhotoPreview" alt="Preview" style="display:none;" onclick="document.getElementById('orgPhoto').click()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Card Color</label>
+              <div class="color-selector">
+                <label class="color-option"><input type="radio" name="cardColor" value="green" checked><span class="color-swatch color-green"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="navy"><span class="color-swatch color-navy"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="maroon"><span class="color-swatch color-maroon"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="black"><span class="color-swatch color-black"></span></label>
+                <label class="color-option"><input type="radio" name="cardColor" value="royal"><span class="color-swatch color-royal"></span></label>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-full">
+              Submit Your Club Card &rarr;
+            </button>
+          </form>
+        </div>
+
+        <!-- PREVIEW SIDE -->
+        <div class="preview-side">
+          <div class="preview-sticky">
+            <h3 class="preview-label">Live Preview</h3>
+            <p class="preview-hint">Fill in the form to see your card come to life</p>
+            <div class="card-preview-container" id="cardPreviewContainer">
+              <!-- Card is rendered here by JS -->
+            </div>
+            <p class="preview-flip-hint">Click the card to flip it</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SUCCESS MODAL ===== -->
+  <div class="modal-overlay" id="successModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-icon">&#9971;</div>
+      <h3 class="modal-title">Welcome to the Community!</h3>
+      <p class="modal-text">Your card has been added to the registry. You're now part of the global golf origin story.</p>
+      <div class="modal-card" id="modalCard"></div>
+      <div class="modal-xp" id="successXP"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="showSection('community'); closeModal()">View Community Wall</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MY CLUBHOUSE / PROFILE SECTION ===== -->
+  <section class="section clubhouse-section" id="section-clubhouse" style="display:none;">
+    <div class="clubhouse-container">
+      <!-- Profile Header -->
+      <div class="clubhouse-header" id="clubhouseHeader">
+        <!-- Rendered by JS: card preview, name, level, XP bar -->
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="clubhouse-tabs">
+        <button class="clubhouse-tab active" onclick="setClubhouseTab('overview')" data-tab="overview">Overview</button>
+        <button class="clubhouse-tab" onclick="setClubhouseTab('rounds')" data-tab="rounds">My Rounds</button>
+        <button class="clubhouse-tab" onclick="setClubhouseTab('badges')" data-tab="badges">Badges</button>
+        <button class="clubhouse-tab" onclick="setClubhouseTab('collection')" data-tab="collection">Top 100 Collection</button>
+      </div>
+
+      <!-- Tab Content -->
+      <div id="clubhouseContent">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== LOG A ROUND MODAL ===== -->
+  <div class="modal-overlay" id="roundModal" style="display:none;">
+    <div class="modal">
+      <button class="modal-close" onclick="closeRoundModal()">&times;</button>
+      <h3 class="modal-title">Log a Round</h3>
+      <p class="modal-text">Record your round and earn XP for your profile.</p>
+      <form id="roundForm" onsubmit="return logRound(event)">
+        <div class="form-group">
+          <label>Course Name <span class="required">*</span></label>
+          <input type="text" name="courseName" required placeholder="e.g. St Andrews Old Course" maxlength="60">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date <span class="required">*</span></label>
+            <input type="date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label>Score <span class="required">*</span></label>
+            <input type="number" name="score" required placeholder="e.g. 85" min="40" max="200">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Par</label>
+            <input type="number" name="par" value="72" min="54" max="80">
+          </div>
+          <div class="form-group">
+            <label>Conditions</label>
+            <select name="conditions">
+              <option value="">Select...</option>
+              <option value="Perfect">Perfect</option>
+              <option value="Good">Good</option>
+              <option value="Windy">Windy</option>
+              <option value="Rainy">Rainy</option>
+              <option value="Mixed">Mixed</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Highlight / Notes</label>
+          <textarea name="notes" placeholder="Any memorable moments from the round?" maxlength="200" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-full">Log This Round</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== COMMUNITY SECTION ===== -->
+  <section class="section community-section" id="section-community" style="display:none;">
+    <div class="community-container">
+      <div class="community-header">
+        <h2 class="section-title">The Community Wall</h2>
+        <p class="section-subtitle">Every card tells a story. Browse the global registry of golf origin stories.</p>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="activity-feed" id="activityFeed">
+        <h3 class="feed-title">Recent Activity</h3>
+        <div class="feed-items" id="feedItems">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="community-filters">
+        <div class="filter-group">
+          <button class="filter-btn active" onclick="filterCards('all')" data-filter="all">All Cards</button>
+          <button class="filter-btn" onclick="filterCards('player')" data-filter="player">Players</button>
+          <button class="filter-btn" onclick="filterCards('org')" data-filter="org">Organizations</button>
+        </div>
+        <div class="filter-group">
+          <div class="search-box">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" placeholder="Search cards..." id="searchInput" oninput="searchCards(this.value)">
+          </div>
+          <select class="sort-select" id="sortSelect" onchange="sortCards(this.value)">
+            <option value="newest">Newest First</option>
+            <option value="oldest-start">Earliest Start</option>
+            <option value="latest-start">Latest Start</option>
+            <option value="alpha">A-Z</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Era badges -->
+      <div class="era-legend">
+        <span class="era-badge era-vintage">Vintage (pre-1960)</span>
+        <span class="era-badge era-classic">Classic (1960-1999)</span>
+        <span class="era-badge era-modern">Modern (2000+)</span>
+      </div>
+
+      <!-- Card Grid -->
+      <div class="card-grid" id="cardGrid">
+        <!-- Cards rendered by JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">&#9971;</div>
+        <h3>No cards yet</h3>
+        <p>Be the first to create a card and start the community!</p>
+        <button class="btn btn-primary" onclick="showSection('submit')">Create Your Card</button>
+      </div>
+      <div class="empty-state" id="noResultsState" style="display:none;">
+        <div class="empty-icon">&#128269;</div>
+        <h3>No matches found</h3>
+        <p>Try adjusting your search or filters.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CARD DETAIL MODAL ===== -->
+  <div class="modal-overlay" id="detailModal" style="display:none;">
+    <div class="modal modal-detail">
+      <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+      <div class="detail-content" id="detailContent">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOP 100 SECTION ===== -->
+  <section class="section top100-section" id="section-top100" style="display:none;">
+    <div class="top100-container">
+      <!-- Ambassador Header -->
+      <div class="top100-header">
+        <div class="ambassador-badge">
+          <span class="ambassador-icon">&#127942;</span>
+          <span class="ambassador-label">Top 100 Golf &bull; Ambassador</span>
+        </div>
+        <h2 class="section-title">Top 100 Golf Courses</h2>
+        <p class="section-subtitle">The world's most celebrated courses, curated by Top 100 Golf. Explore the lists, discover the stories, and see which courses shaped the community's journeys.</p>
+      </div>
+
+      <!-- List Selector Tabs -->
+      <div class="top100-tabs">
+        <button class="top100-tab active" onclick="setTop100List('world')" data-list="world">World</button>
+        <button class="top100-tab" onclick="setTop100List('africa')" data-list="africa">Africa</button>
+        <button class="top100-tab" onclick="setTop100List('europe')" data-list="europe">Europe</button>
+        <button class="top100-tab" onclick="setTop100List('americas')" data-list="americas">Americas</button>
+        <button class="top100-tab" onclick="setTop100List('asia')" data-list="asia">Asia Pacific</button>
+        <button class="top100-tab" onclick="setTop100List('uk')" data-list="uk">UK &amp; Ireland</button>
+      </div>
+
+      <!-- Search / View Toggle -->
+      <div class="top100-controls">
+        <div class="search-box">
+          <span class="search-icon">&#128269;</span>
+          <input type="text" placeholder="Search courses..." id="top100Search" oninput="searchTop100(this.value)">
+        </div>
+        <div class="top100-view-toggle">
+          <button class="view-btn active" onclick="setTop100View('grid')" data-view="grid" title="Card view">&#9638;</button>
+          <button class="view-btn" onclick="setTop100View('list')" data-view="list" title="List view">&#9776;</button>
+        </div>
+      </div>
+
+      <!-- Course Grid -->
+      <div class="top100-grid" id="top100Grid">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Course List View -->
+      <div class="top100-list-view" id="top100ListView" style="display:none;">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Community Connection -->
+      <div class="top100-community-link">
+        <div class="top100-cta-card">
+          <h3>Played one of these courses?</h3>
+          <p>If one of these legendary courses is where your golf journey began, create your Player Card and mark it as your first course. Your card will earn a <span class="top100-inline-badge">TOP 100</span> verified badge.</p>
+          <button class="btn btn-primary" onclick="showSection('submit')">Create Your Card &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Attribution -->
+      <div class="top100-attribution">
+        <p>Rankings sourced from <strong>Top 100 Golf</strong>. Presented by My First Golf Club in partnership as an official Ambassador.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT SECTION ===== -->
+  <section class="section about-section" id="section-about" style="display:none;">
+    <div class="about-container">
+      <div class="about-header">
+        <h2 class="section-title">About My First Golf Club</h2>
+      </div>
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-icon">&#127942;</div>
+          <h3>The Mission</h3>
+          <p>Every golfer has an origin story &mdash; a first swing, a first course, a person who put a club in their hand.
+             My First Golf Club is a living registry that preserves these moments for individuals and organizations alike.
+             We believe these stories connect us across generations, borders, and handicaps.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">&#127183;</div>
+          <h3>The Cards</h3>
+          <p>Inspired by baseball collector cards, each Playing Card captures the essential stats and story of a golf origin.
+             Player Cards are for individuals. Club Cards are for organizations, golf clubs, academies, and corporates.
+             Cards earn era badges based on when the journey started &mdash; Vintage, Classic, or Modern.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">&#127758;</div>
+          <h3>The Community</h3>
+          <p>Our Community Wall brings together origin stories from around the world.
+             Browse, search, and discover how golf found its way into the lives of players and institutions everywhere.
+             Every card added makes the tapestry richer.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-icon">&#128640;</div>
+          <h3>What's Next</h3>
+          <p>Your clubhouse is now live &mdash; log rounds, earn XP, unlock badges, and build your Top 100 collection.
+             Coming soon: shareable card images for social media, a global timeline view, regional collections,
+             endorsements between members, and verified badges for established clubs. The registry grows with you.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TOAST CONTAINER ===== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ===== BADGE UNLOCK MODAL ===== -->
+  <div class="modal-overlay" id="badgeModal" style="display:none;">
+    <div class="modal modal-badge">
+      <div class="badge-confetti" id="badgeConfetti"></div>
+      <div id="badgeModalContent">
+        <!-- Rendered by JS -->
+      </div>
+      <button class="btn btn-primary" onclick="closeBadgeModal()">Awesome!</button>
+    </div>
+  </div>
+
+  <!-- ===== SHARE CARD MODAL ===== -->
+  <div class="modal-overlay" id="shareModal" style="display:none;">
+    <div class="modal">
+      <button class="modal-close" onclick="closeShareModal()">&times;</button>
+      <h3 class="modal-title">Share Your Card</h3>
+      <p class="modal-text">Screenshot your card or copy the link below</p>
+      <div id="shareCardContainer" style="display:flex;justify-content:center;margin:20px 0;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeShareModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img src="logo.png" alt="My First Golf Club" class="footer-logo-img">
+      </div>
+      <p class="footer-tagline">Preserving golf origin stories since 2026.</p>
+      <div class="footer-links">
+        <a href="#" onclick="showSection('submit'); return false;">Create a Card</a>
+        <a href="#" onclick="showSection('community'); return false;">Community</a>
+        <a href="#" onclick="showSection('top100'); return false;">Top 100</a>
+        <a href="#" onclick="showSection('about'); return false;">About</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Module load order matters: dependencies first -->
+  <script src="src/storage.js"></script>
+  <script src="src/toasts.js"></script>
+  <script src="src/feed.js"></script>
+  <script src="src/auth.js"></script>
+  <script src="src/xp.js"></script>
+  <script src="src/badges.js"></script>
+  <script src="src/cards.js"></script>
+  <script src="src/top100.js"></script>
+  <script src="src/navigation.js"></script>
+  <script src="src/forms.js"></script>
+  <script src="src/community.js"></script>
+  <script src="src/rounds.js"></script>
+  <script src="src/clubhouse.js"></script>
+  <script src="src/seed.js"></script>
+  <script src="src/init.js"></script>
+</body>
+</html>
