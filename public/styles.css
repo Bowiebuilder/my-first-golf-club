@@ -3804,62 +3804,92 @@ a {
 }
 
 /* ============================================
-   DESKTOP ENHANCEMENTS (min-width: 1024px)
-   Better use of horizontal space on wide screens
+   DESKTOP LAYOUT (min-width: 1024px)
+   Transforms the mobile-first layout into a
+   proper desktop experience
    ============================================ */
 @media (min-width: 1024px) {
 
-  /* --- Hero: larger type, wider content, show floating cards --- */
+  /* ---- HERO: side-by-side text + floating cards ---- */
+  .hero-section {
+    justify-content: flex-start;
+  }
+
   .hero-content {
-    max-width: 800px;
-    padding: 100px 40px;
+    max-width: 55%;
+    padding: 120px 60px 120px 8%;
+    text-align: left;
+    margin: 0;
   }
 
   .hero-title {
-    font-size: 68px;
+    font-size: 62px;
   }
 
   .hero-subtitle {
-    font-size: 20px;
-    max-width: 620px;
+    font-size: 19px;
+    max-width: 540px;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   .hero-eyebrow {
-    font-size: 18px;
+    font-size: 17px;
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .hero-stats {
+    justify-content: flex-start;
   }
 
   .hero-stat-number {
-    font-size: 42px;
+    font-size: 44px;
   }
 
+  /* Floating cards fill the right side */
   .hero-card-preview {
     display: block;
   }
 
   .floating-card-1 {
-    top: 18%;
-    right: 6%;
+    top: 22%;
+    right: 8%;
   }
 
   .floating-card-2 {
-    bottom: 20%;
-    left: 5%;
+    bottom: 22%;
+    right: 22%;
+    left: auto;
   }
 
   .mini-card {
-    width: 180px;
-    padding: 24px 20px;
+    width: 190px;
+    padding: 26px 22px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
   }
 
-  /* --- Nav: more breathing room --- */
+  .mini-card-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 18px;
+  }
+
+  .mini-card-name {
+    font-size: 16px;
+  }
+
+  /* ---- NAV ---- */
   .nav-inner {
-    max-width: 1300px;
-    padding: 0 40px;
+    max-width: 1400px;
+    padding: 0 48px;
     height: 72px;
   }
 
   .nav-logo-img {
-    height: 46px;
+    height: 48px;
   }
 
   .nav-link {
@@ -3867,22 +3897,33 @@ a {
     padding: 10px 20px;
   }
 
-  /* --- Community: bigger cards in a proper grid --- */
+  /* ---- SECTION TITLES ---- */
+  .section-title {
+    font-size: 48px;
+  }
+
+  .section-subtitle {
+    font-size: 18px;
+    max-width: 620px;
+  }
+
+  /* ---- COMMUNITY: full-width card grid ---- */
   .community-container {
-    max-width: 1300px;
-    padding: 60px 40px 80px;
+    max-width: 1400px;
+    padding: 60px 48px 80px;
   }
 
   .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 32px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
     justify-items: center;
   }
 
   .card-grid .golf-card {
-    width: 290px;
-    height: 418px;
+    width: 100%;
+    max-width: 310px;
+    height: 440px;
   }
 
   .card-grid .card-player-name {
@@ -3890,73 +3931,124 @@ a {
   }
 
   .card-grid .card-initials {
-    width: 90px;
-    height: 90px;
-    font-size: 32px;
+    width: 95px;
+    height: 95px;
+    font-size: 34px;
   }
 
   .card-grid .card-photo {
-    width: 90px;
-    height: 90px;
+    width: 95px;
+    height: 95px;
   }
 
-  /* --- Activity Feed: horizontal layout --- */
+  .card-grid .card-stat-value {
+    font-size: 15px;
+  }
+
+  .card-grid .card-stat-label {
+    font-size: 9px;
+  }
+
+  .card-grid .card-back-story p {
+    font-size: 12px;
+  }
+
+  /* ---- ACTIVITY FEED: card style, 2 columns ---- */
   .activity-feed {
-    margin-bottom: 32px;
+    margin-bottom: 36px;
     background: #fff;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
-    padding: 24px;
+    padding: 28px 32px;
+    box-shadow: 0 2px 8px var(--shadow);
   }
 
   .feed-items {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px 24px;
+    gap: 6px 32px;
   }
 
-  /* --- Submit: wider form, larger preview --- */
+  .feed-item {
+    padding: 10px 0;
+  }
+
+  /* ---- FILTERS: spread out ---- */
+  .community-filters {
+    margin-bottom: 28px;
+  }
+
+  .search-box input {
+    width: 260px;
+  }
+
+  .search-box input:focus {
+    width: 320px;
+  }
+
+  /* ---- SUBMIT: spacious layout ---- */
   .submit-container {
     max-width: 1200px;
-    padding: 60px 40px 80px;
+    padding: 60px 48px 80px;
   }
 
   .submit-layout {
-    grid-template-columns: 1fr 420px;
-    gap: 60px;
+    grid-template-columns: 1fr 440px;
+    gap: 64px;
   }
 
   .card-form {
-    padding: 40px;
+    padding: 40px 44px;
   }
 
-  /* --- Clubhouse: wider container --- */
+  /* ---- CLUBHOUSE ---- */
   .clubhouse-container {
-    max-width: 1100px;
-    padding: 60px 40px 80px;
+    max-width: 1200px;
+    padding: 60px 48px 80px;
+  }
+
+  .clubhouse-header {
+    padding: 32px 36px;
   }
 
   .overview-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
   }
 
   .stat-card {
-    padding: 28px;
+    padding: 28px 24px;
   }
 
   .stat-card-value {
-    font-size: 36px;
+    font-size: 38px;
   }
 
-  /* --- Top 100: wider grid, bigger course cards --- */
+  .stat-card-label {
+    font-size: 13px;
+  }
+
+  .overview-sections {
+    gap: 28px;
+  }
+
+  .round-entry {
+    padding: 16px 20px;
+  }
+
+  /* ---- TOP 100 ---- */
   .top100-container {
-    max-width: 1300px;
-    padding: 60px 40px 80px;
+    max-width: 1400px;
+    padding: 60px 48px 80px;
   }
 
   .top100-grid {
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 28px;
+  }
+
+  .course-card-banner {
+    height: 160px;
   }
 
   .course-card-body {
@@ -3967,77 +4059,124 @@ a {
     font-size: 22px;
   }
 
-  /* --- About: wider grid --- */
+  .top100-cta-card {
+    padding: 56px 48px;
+  }
+
+  .top100-cta-card h3 {
+    font-size: 32px;
+  }
+
+  /* ---- ABOUT: bigger cards ---- */
   .about-container {
     max-width: 1100px;
-    padding: 60px 40px 80px;
+    padding: 60px 48px 80px;
   }
 
-  /* --- Section titles scale up --- */
-  .section-title {
-    font-size: 44px;
+  .about-card {
+    padding: 36px;
   }
 
-  .section-subtitle {
-    font-size: 18px;
-    max-width: 600px;
+  .about-card h3 {
+    font-size: 24px;
   }
 
-  /* --- Modals: bigger on desktop --- */
+  .about-card p {
+    font-size: 15px;
+  }
+
+  /* ---- MODALS ---- */
   .modal {
-    max-width: 520px;
+    max-width: 540px;
     padding: 48px;
   }
 
   .modal-detail {
-    max-width: 780px;
+    max-width: 800px;
     padding: 56px;
+  }
+
+  .detail-stats-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  /* ---- FOOTER ---- */
+  .footer {
+    padding: 48px 48px;
   }
 }
 
 /* ============================================
    LARGE DESKTOP (min-width: 1440px)
-   For very wide monitors
    ============================================ */
 @media (min-width: 1440px) {
 
   .hero-content {
-    max-width: 900px;
+    padding-left: 10%;
+    max-width: 50%;
   }
 
   .hero-title {
-    font-size: 76px;
+    font-size: 72px;
+  }
+
+  .floating-card-1 {
+    right: 10%;
+    top: 25%;
+  }
+
+  .floating-card-2 {
+    right: 25%;
+    bottom: 25%;
+  }
+
+  .mini-card {
+    width: 200px;
+    padding: 28px 24px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 32px;
+  }
+
+  .top100-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .community-container,
   .top100-container {
-    max-width: 1400px;
-  }
-
-  .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 36px;
-  }
-
-  .card-grid .golf-card {
-    width: 300px;
-    height: 432px;
-  }
-
-  .top100-grid {
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  }
-
-  .submit-layout {
-    grid-template-columns: 1fr 460px;
-  }
-
-  .overview-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    max-width: 1500px;
   }
 
   .feed-items {
     grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* ============================================
+   ULTRAWIDE (min-width: 1800px)
+   ============================================ */
+@media (min-width: 1800px) {
+
+  .hero-title {
+    font-size: 80px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(5, 1fr);
+    max-width: 1700px;
+    margin: 0 auto;
+  }
+
+  .card-grid .golf-card {
+    max-width: 340px;
+    height: 480px;
+  }
+
+  .top100-grid {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 1700px;
+    margin: 0 auto;
   }
 }
