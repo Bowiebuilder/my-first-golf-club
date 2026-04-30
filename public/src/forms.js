@@ -1,8 +1,40 @@
 /* ============================================
    FORMS - src/forms.js
    Card submission, photo upload, live preview, form binding
-   Depends on: storage.js, auth.js, cards.js, xp.js, badges.js, feed.js, top100.js
+   Depends on: storage.js, api.js, auth.js, cards.js, xp.js, badges.js, feed.js, top100.js
    ============================================ */
+
+// --- Map API snake_case card to frontend camelCase ---
+function mapCardFromAPI(c) {
+  if (!c) return c;
+  return {
+    id: c.id, type: c.type, name: c.name,
+    yearStarted: c.year_started, ageStarted: c.age_started,
+    firstCourse: c.first_course, location: c.location,
+    handicap: c.handicap, introducedBy: c.introduced_by,
+    favClub: c.fav_club, story: c.story,
+    cardColor: c.card_color, photo: c.photo_url,
+    orgType: c.org_type, signatureCourse: c.signature_course,
+    memberCount: c.member_count, holes: c.holes,
+    founder: c.founder, tips: c.tips,
+    createdAt: c.created_at, userId: c.user_id
+  };
+}
+
+// --- Map frontend camelCase to API snake_case ---
+function mapCardToAPI(data) {
+  return {
+    type: data.type, name: data.name,
+    yearStarted: data.yearStarted, ageStarted: data.ageStarted,
+    firstCourse: data.firstCourse, location: data.location,
+    handicap: data.handicap, introducedBy: data.introducedBy,
+    favClub: data.favClub, story: data.story,
+    cardColor: data.cardColor, photoUrl: data.photoUrl || null,
+    orgType: data.orgType, signatureCourse: data.signatureCourse,
+    memberCount: data.memberCount, holes: data.holes,
+    founder: data.founder
+  };
+}
 
 function setCardType(type) {
   currentCardType = type;
@@ -39,6 +71,11 @@ function handlePhotoUpload(input, type) {
   var file = input.files[0];
   if (!file) return;
 
+  // Store the file for potential R2 upload later
+  if (type === 'player') { window._playerPhotoFile = file; }
+  else { window._orgPhotoFile = file; }
+
+  // Show preview immediately using local FileReader
   var reader = new FileReader();
   reader.onload = function(e) {
     var dataUrl = e.target.result;
@@ -64,7 +101,7 @@ function handlePhotoUpload(input, type) {
 var _pendingCardData = null;
 var _pendingCardType = null;
 
-function submitCard(event, type) {
+async function submitCard(event, type) {
   event.preventDefault();
   var data = getFormData(type);
 
@@ -90,50 +127,83 @@ function submitCard(event, type) {
     return false;
   }
 
-  // Check if editing existing card or creating new
-  var user = getCurrentUser();
-  var isEdit = user && user.cardId;
+  await _saveCard(data, type);
+  return false;
+}
+
+// Core save logic - used by both submitCard and processPendingCard
+async function _saveCard(data, type) {
   var card;
+  var isEdit = false;
+  var user = getCurrentUser();
 
-  if (isEdit) {
-    // Update existing card
-    var cards = getCards();
-    var idx = cards.findIndex(function(c) { return c.id === user.cardId; });
-    if (idx >= 0) {
-      // Preserve id, createdAt, tips
-      data.id = cards[idx].id;
-      data.createdAt = cards[idx].createdAt;
-      data.tips = cards[idx].tips || 0;
-      cards[idx] = data;
-      saveCards(cards);
-      card = data;
-    } else {
-      card = addCard(data);
-      user.cardId = card.id;
-    }
-  } else {
-    card = addCard(data);
-  }
-
-  if (user) {
-    if (!isEdit) {
-      user.cardId = card.id;
-      awardXP(100, 'Creating your playing card');
-      addFeedItem('card_created', { cardType: type, cardName: data.name });
-    } else {
-      showToast('success', 'Card updated', 'Your playing card has been updated');
-    }
-
-    // Check if first course is Top 100
-    if (type === 'player' && typeof isTop100Course === 'function' && isTop100Course(data.firstCourse)) {
-      if (!user.playedCourses) user.playedCourses = [];
-      var courseName = data.firstCourse;
-      if (user.playedCourses.indexOf(courseName) < 0) {
-        user.playedCourses.push(courseName);
+  try {
+    if (USE_API) {
+      // Upload photo to R2 first if there's a file
+      var photoFile = type === 'player' ? window._playerPhotoFile : window._orgPhotoFile;
+      if (photoFile) {
+        try {
+          var photoUrl = await API.uploadPhoto(photoFile);
+          data.photoUrl = photoUrl;
+        } catch (e) {
+          // Photo upload failed - continue without it
+          console.warn('Photo upload failed:', e);
+        }
       }
-    }
 
-    saveCurrentUser(user);
+      var apiData = mapCardToAPI(data);
+      var result = await API.createOrUpdateCard(apiData);
+      card = mapCardFromAPI(result.card);
+      isEdit = result.updated || false;
+
+      // Also update localStorage cache
+      if (!isEdit) {
+        var cards = getCards();
+        cards.unshift(card);
+        saveCards(cards);
+      }
+
+      // Refresh user from API (card_id, xp etc updated server-side)
+      await API.getMe();
+      user = getCurrentUser();
+    } else {
+      // localStorage-only mode
+      isEdit = user && user.cardId;
+      if (isEdit) {
+        var cards = getCards();
+        var idx = cards.findIndex(function(c) { return c.id === user.cardId; });
+        if (idx >= 0) {
+          data.id = cards[idx].id;
+          data.createdAt = cards[idx].createdAt;
+          data.tips = cards[idx].tips || 0;
+          cards[idx] = data;
+          saveCards(cards);
+          card = data;
+        } else {
+          card = addCard(data);
+          user.cardId = card.id;
+        }
+      } else {
+        card = addCard(data);
+      }
+
+      if (!isEdit) {
+        user.cardId = card.id;
+        awardXP(100, 'Creating your playing card');
+        addFeedItem('card_created', { cardType: type, cardName: data.name });
+      }
+
+      if (type === 'player' && typeof isTop100Course === 'function' && isTop100Course(data.firstCourse)) {
+        if (!user.playedCourses) user.playedCourses = [];
+        if (user.playedCourses.indexOf(data.firstCourse) < 0) {
+          user.playedCourses.push(data.firstCourse);
+        }
+      }
+      saveCurrentUser(user);
+    }
+  } catch (err) {
+    showToast('error', 'Save failed', err.message || 'Please try again');
+    return;
   }
 
   // Show success modal
@@ -141,35 +211,46 @@ function submitCard(event, type) {
   if (modalCard) modalCard.innerHTML = renderCardHTML(card);
 
   var xpEl = document.getElementById('successXP');
-  if (xpEl) xpEl.innerHTML = '<span style="color:var(--gold);font-family:var(--font-accent);font-size:20px;">+100 XP</span> for creating your card!';
+  if (xpEl) {
+    xpEl.innerHTML = isEdit
+      ? '<span style="color:var(--green);font-weight:600;">Card updated successfully!</span>'
+      : '<span style="color:var(--gold);font-family:var(--font-accent);font-size:20px;">+100 XP</span> for creating your card!';
+  }
+
+  if (isEdit) {
+    showToast('success', 'Card updated', 'Your playing card has been updated');
+  }
 
   var modal = document.getElementById('successModal');
   if (modal) modal.style.display = 'flex';
 
   // Reset form
+  _resetForm(type);
+
+  // Check badges
+  setTimeout(function() { checkBadges(); }, 1200);
+}
+
+function _resetForm(type) {
   var form = document.getElementById(type === 'player' ? 'playerForm' : 'orgForm');
   if (form) form.reset();
 
   if (type === 'player') {
     playerPhotoData = null;
+    window._playerPhotoFile = null;
     var pp = document.getElementById('playerPhotoPreview');
     if (pp) pp.style.display = 'none';
     var pph = document.querySelector('#playerPhotoUpload .photo-placeholder');
     if (pph) pph.style.display = '';
   } else {
     orgPhotoData = null;
+    window._orgPhotoFile = null;
     var op = document.getElementById('orgPhotoPreview');
     if (op) op.style.display = 'none';
     var oph = document.querySelector('#orgPhotoUpload .photo-placeholder');
     if (oph) oph.style.display = '';
   }
-
   renderPreviewCard();
-
-  // Check badges after a short delay
-  setTimeout(function() { checkBadges(); }, 1200);
-
-  return false;
 }
 
 function closeModal() {
@@ -178,7 +259,7 @@ function closeModal() {
 }
 
 // Called after auth completes - checks if there's a pending card to submit
-function processPendingCard() {
+async function processPendingCard() {
   if (!_pendingCardData || !_pendingCardType) return;
   if (!getCurrentUser()) return;
 
@@ -187,51 +268,7 @@ function processPendingCard() {
   _pendingCardData = null;
   _pendingCardType = null;
 
-  // Create a synthetic event-like to re-use submitCard logic
-  // But we already validated, so just run the save logic directly
-  var user = getCurrentUser();
-  var card = addCard(data);
-
-  user.cardId = card.id;
-
-  if (type === 'player' && typeof isTop100Course === 'function' && isTop100Course(data.firstCourse)) {
-    if (!user.playedCourses) user.playedCourses = [];
-    if (user.playedCourses.indexOf(data.firstCourse) < 0) {
-      user.playedCourses.push(data.firstCourse);
-    }
-  }
-
-  saveCurrentUser(user);
-  awardXP(100, 'Creating your playing card');
-  addFeedItem('card_created', { cardType: type, cardName: data.name });
-
-  // Show success modal
-  var modalCard = document.getElementById('modalCard');
-  if (modalCard) modalCard.innerHTML = renderCardHTML(card);
-  var xpEl = document.getElementById('successXP');
-  if (xpEl) xpEl.innerHTML = '<span style="color:var(--gold);font-family:var(--font-accent);font-size:20px;">+100 XP</span> for creating your card!';
-  var modal = document.getElementById('successModal');
-  if (modal) modal.style.display = 'flex';
-
-  // Reset form
-  var form = document.getElementById(type === 'player' ? 'playerForm' : 'orgForm');
-  if (form) form.reset();
-  if (type === 'player') {
-    playerPhotoData = null;
-    var pp = document.getElementById('playerPhotoPreview');
-    if (pp) pp.style.display = 'none';
-    var pph = document.querySelector('#playerPhotoUpload .photo-placeholder');
-    if (pph) pph.style.display = '';
-  } else {
-    orgPhotoData = null;
-    var op = document.getElementById('orgPhotoPreview');
-    if (op) op.style.display = 'none';
-    var oph = document.querySelector('#orgPhotoUpload .photo-placeholder');
-    if (oph) oph.style.display = '';
-  }
-  renderPreviewCard();
-
-  setTimeout(function() { checkBadges(); }, 1200);
+  await _saveCard(data, type);
 }
 
 function bindFormEvents() {
@@ -267,38 +304,43 @@ function bindFormEvents() {
 }
 
 // --- Edit existing card ---
-function editCard() {
+async function editCard() {
   var user = getCurrentUser();
   if (!user || !user.cardId) return;
 
-  var cards = getCards();
-  var card = cards.find(function(c) { return c.id === user.cardId; });
-  if (!card) return;
+  var card;
+  try {
+    if (USE_API) {
+      var apiCard = await API.getCard(user.cardId);
+      card = mapCardFromAPI(apiCard);
+    } else {
+      var cards = getCards();
+      card = cards.find(function(c) { return c.id === user.cardId; });
+    }
+  } catch (e) {
+    // Fallback to localStorage
+    var cards = getCards();
+    card = cards.find(function(c) { return c.id === user.cardId; });
+  }
 
-  // Set the correct card type
+  if (!card) { showToast('error', 'Card not found', 'Could not load your card'); return; }
+
   setCardType(card.type || 'player');
-
-  // Navigate to the submit section
   showSection('submit');
 
-  // Populate the form with existing data
   setTimeout(function() {
     var formId = card.type === 'org' ? 'orgForm' : 'playerForm';
     var form = document.getElementById(formId);
     if (!form) return;
 
-    // Fill text/number inputs
     var fields = ['name', 'yearStarted', 'ageStarted', 'firstCourse', 'location',
                   'handicap', 'introducedBy', 'story', 'orgType', 'signatureCourse',
                   'memberCount', 'founder', 'holes'];
     fields.forEach(function(field) {
       var input = form.querySelector('[name="' + field + '"]');
-      if (input && card[field]) {
-        input.value = card[field];
-      }
+      if (input && card[field]) input.value = card[field];
     });
 
-    // Fill radio buttons (favClub, cardColor)
     if (card.favClub) {
       var radio = form.querySelector('input[name="favClub"][value="' + card.favClub + '"]');
       if (radio) radio.checked = true;
@@ -307,8 +349,6 @@ function editCard() {
       var colorRadio = form.querySelector('input[name="cardColor"][value="' + card.cardColor + '"]');
       if (colorRadio) colorRadio.checked = true;
     }
-
-    // Restore photo
     if (card.photo) {
       if (card.type === 'player') {
         playerPhotoData = card.photo;
@@ -325,15 +365,12 @@ function editCard() {
       }
     }
 
-    // Update char count
     var storyEl = form.querySelector('textarea[name="story"]');
     if (storyEl) {
       var countId = card.type === 'player' ? 'playerCharCount' : 'orgCharCount';
       var countEl = document.getElementById(countId);
       if (countEl) countEl.textContent = storyEl.value.length;
     }
-
     renderPreviewCard();
   }, 100);
 }
-

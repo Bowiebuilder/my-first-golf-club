@@ -1,22 +1,49 @@
 /* ============================================
    COMMUNITY - src/community.js
    Community wall, filters, card detail, tips
-   Depends on: storage.js, auth.js, cards.js, feed.js, xp.js, badges.js
+   Depends on: storage.js, api.js, auth.js, cards.js, feed.js, xp.js, badges.js
    ============================================ */
 
-function renderCommunity() {
+// Local cache of cards fetched from API
+var _communityCards = null;
+
+async function renderCommunity() {
   // Render activity feed
   if (typeof renderActivityFeed === 'function') renderActivityFeed();
 
+  var cards;
+  try {
+    if (USE_API) {
+      var result = await API.getCards({
+        type: currentFilter !== 'all' ? currentFilter : undefined,
+        search: currentSearch || undefined,
+        sort: currentSort,
+        limit: 100
+      });
+      // Map API snake_case to frontend camelCase
+      cards = result.cards.map(mapCardFromAPI);
+      _communityCards = cards;
+      // Also cache in localStorage
+      saveCards(cards);
+    } else {
+      cards = _getLocalCards();
+    }
+  } catch (e) {
+    // Fallback to localStorage
+    cards = _getLocalCards();
+  }
+
+  _renderCardGrid(cards);
+}
+
+// localStorage card fetching with local filter/sort
+function _getLocalCards() {
   var allCards = getCards();
   var cards = allCards.slice();
 
-  // Filter
   if (currentFilter !== 'all') {
     cards = cards.filter(function(c) { return c.type === currentFilter; });
   }
-
-  // Search
   if (currentSearch) {
     var q = currentSearch.toLowerCase();
     cards = cards.filter(function(c) {
@@ -29,36 +56,28 @@ function renderCommunity() {
         (c.orgType || '').toLowerCase().indexOf(q) >= 0;
     });
   }
-
-  // Sort
   switch (currentSort) {
     case 'oldest-start':
-      cards.sort(function(a, b) { return (a.yearStarted || 9999) - (b.yearStarted || 9999); });
-      break;
+      cards.sort(function(a, b) { return (a.yearStarted || 9999) - (b.yearStarted || 9999); }); break;
     case 'latest-start':
-      cards.sort(function(a, b) { return (b.yearStarted || 0) - (a.yearStarted || 0); });
-      break;
+      cards.sort(function(a, b) { return (b.yearStarted || 0) - (a.yearStarted || 0); }); break;
     case 'alpha':
-      cards.sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
-      break;
-    default: break; // newest - already sorted
+      cards.sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); }); break;
   }
+  return cards;
+}
 
+function _renderCardGrid(cards) {
   var grid = document.getElementById('cardGrid');
   var empty = document.getElementById('emptyState');
   var noResults = document.getElementById('noResultsState');
 
-  if (allCards.length === 0) {
+  if (!cards || cards.length === 0) {
     if (grid) grid.style.display = 'none';
-    if (empty) empty.style.display = '';
-    if (noResults) noResults.style.display = 'none';
-    return;
-  }
-
-  if (cards.length === 0) {
-    if (grid) grid.style.display = 'none';
-    if (empty) empty.style.display = 'none';
-    if (noResults) noResults.style.display = '';
+    // Show empty vs no-results based on whether we have any filter active
+    var isFiltered = currentFilter !== 'all' || currentSearch;
+    if (empty) empty.style.display = isFiltered ? 'none' : '';
+    if (noResults) noResults.style.display = isFiltered ? '' : 'none';
     return;
   }
 
@@ -92,9 +111,18 @@ function sortCards(sort) {
   renderCommunity();
 }
 
-function openDetail(id) {
-  var cards = getCards();
-  var card = cards.find(function(c) { return c.id === id; });
+async function openDetail(id) {
+  var card;
+  try {
+    if (USE_API) {
+      var apiCard = await API.getCard(id);
+      card = mapCardFromAPI(apiCard);
+    } else {
+      card = getCards().find(function(c) { return c.id === id; });
+    }
+  } catch (e) {
+    card = getCards().find(function(c) { return c.id === id; });
+  }
   if (!card) return;
 
   var isPlayer = card.type === 'player';
@@ -151,25 +179,32 @@ function closeDetailModal() {
   document.getElementById('detailModal').style.display = 'none';
 }
 
-function tipCap(id) {
+async function tipCap(id) {
   var user = getCurrentUser();
   if (!user) { openAuth('signin'); return; }
 
+  try {
+    if (USE_API) {
+      var result = await API.tipCap(id);
+      var el = document.getElementById('tipCount-' + id);
+      if (el) el.textContent = '(' + result.tips + ')';
+      showToast('success', 'Cap tipped!', 'You showed appreciation');
+      setTimeout(function() { checkBadges(); }, 500);
+      return;
+    }
+  } catch (e) {
+    // Fall through to localStorage
+  }
+
+  // localStorage fallback
   var cards = getCards();
   var card = cards.find(function(c) { return c.id === id; });
   if (!card) return;
-
   card.tips = (card.tips || 0) + 1;
   saveCards(cards);
-
-  // Update count display
   var el = document.getElementById('tipCount-' + id);
   if (el) el.textContent = '(' + card.tips + ')';
-
-  // Feed item
   addFeedItem('tip', { targetName: card.name, cardId: id });
-
-  // Award XP to card owner (find user who owns this card)
   var users = getUsers();
   var owner = users.find(function(u) { return u.cardId === id; });
   if (owner) {
@@ -178,25 +213,29 @@ function tipCap(id) {
     var idx = users.findIndex(function(u) { return u.email === owner.email; });
     if (idx >= 0) { users[idx] = owner; saveUsers(users); }
   }
-
   showToast('success', 'Cap tipped!', 'You showed appreciation for ' + card.name);
-
-  // Check tipped badge for the owner
   setTimeout(function() { checkBadges(); }, 500);
 }
 
-// Share modal
-function openShareModal() {
+async function openShareModal() {
   var user = getCurrentUser();
   if (!user || !user.cardId) return;
 
-  var cards = getCards();
-  var card = cards.find(function(c) { return c.id === user.cardId; });
+  var card;
+  try {
+    if (USE_API) {
+      var apiCard = await API.getCard(user.cardId);
+      card = mapCardFromAPI(apiCard);
+    } else {
+      card = getCards().find(function(c) { return c.id === user.cardId; });
+    }
+  } catch (e) {
+    card = getCards().find(function(c) { return c.id === user.cardId; });
+  }
   if (!card) return;
 
   var container = document.getElementById('shareCardContainer');
   if (container) container.innerHTML = renderCardHTML(card);
-
   document.getElementById('shareModal').style.display = 'flex';
 }
 

@@ -1,17 +1,17 @@
 /* ============================================
    CLUBHOUSE / PROFILE - src/clubhouse.js
    Dashboard, overview, rounds, badges, collection tabs
-   Depends on: storage.js, auth.js, xp.js, badges.js, rounds.js, cards.js, top100.js
+   Depends on: storage.js, api.js, auth.js, xp.js, badges.js, rounds.js, cards.js, top100.js
    ============================================ */
 
-function renderClubhouse() {
+async function renderClubhouse() {
   var user = getCurrentUser();
   if (!user) { showSection('hero'); return; }
-  renderClubhouseHeader(user);
-  setClubhouseTab(currentClubhouseTab);
+  await renderClubhouseHeader(user);
+  await setClubhouseTab(currentClubhouseTab);
 }
 
-function renderClubhouseHeader(user) {
+async function renderClubhouseHeader(user) {
   var header = document.getElementById('clubhouseHeader');
   if (!header) return;
 
@@ -19,10 +19,12 @@ function renderClubhouseHeader(user) {
   var next = getNextLevel(user.xp);
   var progress = getLevelProgress(user.xp);
   var pct = Math.round(progress * 100);
-  var rounds = getUserRounds(user.email);
-  var best = getBestRound(rounds);
 
-  // Mini card
+  // Get rounds
+  var roundsData = await getUserRoundsAsync();
+  var rounds = roundsData.rounds || [];
+  var best = roundsData.stats ? roundsData.stats.bestScore : null;
+
   var cards = getCards();
   var userCard = cards.find(function(c) { return c.id === user.cardId; });
   var initials = getInitials(user.name);
@@ -34,6 +36,9 @@ function renderClubhouseHeader(user) {
   var xpText = next
     ? user.xp + ' / ' + next.minXP + ' XP'
     : user.xp + ' XP (Max Level!)';
+
+  var playedCount = (user.playedCourses || user.played_courses || []).length;
+  var badgeCount = (user.unlockedBadges || user.unlocked_badges || []).length;
 
   header.innerHTML =
     '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">' +
@@ -54,13 +59,13 @@ function renderClubhouseHeader(user) {
     '</div>' +
     '<div class="clubhouse-header-stats">' +
       '<div class="clubhouse-header-stat"><span class="clubhouse-header-stat-value">' + rounds.length + '</span><span class="clubhouse-header-stat-label">Rounds</span></div>' +
-      '<div class="clubhouse-header-stat"><span class="clubhouse-header-stat-value">' + (best ? best.score : '-') + '</span><span class="clubhouse-header-stat-label">Best Score</span></div>' +
-      '<div class="clubhouse-header-stat"><span class="clubhouse-header-stat-value">' + user.unlockedBadges.length + '</span><span class="clubhouse-header-stat-label">Badges</span></div>' +
-      '<div class="clubhouse-header-stat"><span class="clubhouse-header-stat-value">' + (user.playedCourses || []).length + '</span><span class="clubhouse-header-stat-label">Top 100 Played</span></div>' +
+      '<div class="clubhouse-header-stat"><span class="clubhouse-header-stat-value">' + (best || '-') + '</span><span class="clubhouse-header-stat-label">Best Score</span></div>' +
+      '<div class="clubhouse-header-stat"><span class="clubhouse-header-stat-value">' + badgeCount + '</span><span class="clubhouse-header-stat-label">Badges</span></div>' +
+      '<div class="clubhouse-header-stat"><span class="clubhouse-header-stat-value">' + playedCount + '</span><span class="clubhouse-header-stat-label">Top 100 Played</span></div>' +
     '</div>';
 }
 
-function setClubhouseTab(tab) {
+async function setClubhouseTab(tab) {
   currentClubhouseTab = tab;
   document.querySelectorAll('.clubhouse-tab').forEach(function(t) {
     t.classList.toggle('active', t.getAttribute('data-tab') === tab);
@@ -70,29 +75,32 @@ function setClubhouseTab(tab) {
   if (!content) return;
 
   switch (tab) {
-    case 'overview': renderOverviewTab(content); break;
-    case 'rounds': renderRoundsTab(content); break;
-    case 'badges': renderBadgesTab(content); break;
-    case 'collection': renderCollectionTab(content); break;
+    case 'overview': await renderOverviewTab(content); break;
+    case 'rounds': await renderRoundsTab(content); break;
+    case 'badges': await renderBadgesTab(content); break;
+    case 'collection': await renderCollectionTab(content); break;
   }
 }
 
-function renderOverviewTab(container) {
+async function renderOverviewTab(container) {
   var user = getCurrentUser();
   if (!user) return;
-  var rounds = getUserRounds(user.email);
-  var best = getBestRound(rounds);
-  var avg = getAverageScore(rounds);
-  var memberSince = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  // Recent rounds (last 3)
+  var roundsData = await getUserRoundsAsync();
+  var rounds = roundsData.rounds || [];
+  var stats = roundsData.stats || {};
+  var memberSince = new Date(user.createdAt || user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  var playedCount = (user.playedCourses || user.played_courses || []).length;
+  var badgeCount = (user.unlockedBadges || user.unlocked_badges || []).length;
+
   var recentRounds = rounds.slice(0, 3);
   var recentHTML = recentRounds.length > 0
     ? recentRounds.map(function(r) { return renderRoundEntry(r); }).join('')
     : '<p class="text-muted" style="padding:20px;text-align:center;">No rounds logged yet. <a href="#" onclick="openRoundModal();return false;">Log your first round</a></p>';
 
-  // Recent badges (last 3)
-  var recentBadges = user.unlockedBadges.slice(-3).reverse();
+  var badges = user.unlockedBadges || user.unlocked_badges || [];
+  var recentBadges = badges.slice(-3).reverse();
   var badgeHTML = recentBadges.length > 0
     ? recentBadges.map(function(bid) {
         var badge = BADGES.find(function(b) { return b.id === bid; });
@@ -104,10 +112,10 @@ function renderOverviewTab(container) {
   container.innerHTML =
     '<div class="overview-grid">' +
       '<div class="stat-card"><div class="stat-card-icon">&#9971;</div><div class="stat-card-value">' + rounds.length + '</div><div class="stat-card-label">Total Rounds</div></div>' +
-      '<div class="stat-card"><div class="stat-card-icon">&#127942;</div><div class="stat-card-value">' + (best ? best.score : '-') + '</div><div class="stat-card-label">Best Score</div></div>' +
-      '<div class="stat-card"><div class="stat-card-icon">&#128200;</div><div class="stat-card-value">' + (avg || '-') + '</div><div class="stat-card-label">Avg Score</div></div>' +
-      '<div class="stat-card"><div class="stat-card-icon">&#127757;</div><div class="stat-card-value">' + (user.playedCourses || []).length + '</div><div class="stat-card-label">Top 100 Played</div></div>' +
-      '<div class="stat-card"><div class="stat-card-icon">&#127183;</div><div class="stat-card-value">' + user.unlockedBadges.length + '/' + BADGES.length + '</div><div class="stat-card-label">Badges</div></div>' +
+      '<div class="stat-card"><div class="stat-card-icon">&#127942;</div><div class="stat-card-value">' + (stats.bestScore || '-') + '</div><div class="stat-card-label">Best Score</div></div>' +
+      '<div class="stat-card"><div class="stat-card-icon">&#128200;</div><div class="stat-card-value">' + (stats.avgScore || '-') + '</div><div class="stat-card-label">Avg Score</div></div>' +
+      '<div class="stat-card"><div class="stat-card-icon">&#127757;</div><div class="stat-card-value">' + playedCount + '</div><div class="stat-card-label">Top 100 Played</div></div>' +
+      '<div class="stat-card"><div class="stat-card-icon">&#127183;</div><div class="stat-card-value">' + badgeCount + '/' + BADGES.length + '</div><div class="stat-card-label">Badges</div></div>' +
       '<div class="stat-card"><div class="stat-card-icon">&#128197;</div><div class="stat-card-value" style="font-size:18px;">' + memberSince + '</div><div class="stat-card-label">Member Since</div></div>' +
     '</div>' +
     '<div class="overview-sections">' +
@@ -127,7 +135,7 @@ function renderRoundEntry(r) {
       '<span class="round-vs-par">' + diffStr + '</span>' +
     '</div>' +
     '<div class="round-details">' +
-      '<div class="round-course">' + r.courseName + '</div>' +
+      '<div class="round-course">' + (r.courseName || r.course_name) + '</div>' +
       '<div class="round-meta">' +
         '<span>' + new Date(r.date).toLocaleDateString() + '</span>' +
         (r.conditions ? ' &bull; <span class="round-conditions">' + r.conditions + '</span>' : '') +
@@ -137,10 +145,12 @@ function renderRoundEntry(r) {
   '</div>';
 }
 
-function renderRoundsTab(container) {
+async function renderRoundsTab(container) {
   var user = getCurrentUser();
   if (!user) return;
-  var rounds = getUserRounds(user.email);
+
+  var roundsData = await getUserRoundsAsync();
+  var rounds = roundsData.rounds || [];
 
   if (rounds.length === 0) {
     container.innerHTML =
@@ -163,11 +173,12 @@ function renderRoundsTab(container) {
     '</div>';
 }
 
-function renderBadgesTab(container) {
+async function renderBadgesTab(container) {
   var user = getCurrentUser();
   if (!user) return;
 
-  var unlocked = user.unlockedBadges.length;
+  var userBadges = user.unlockedBadges || user.unlocked_badges || [];
+  var unlocked = userBadges.length;
   var total = BADGES.length;
 
   container.innerHTML =
@@ -177,7 +188,7 @@ function renderBadgesTab(container) {
     '</div>' +
     '<div class="badge-grid">' +
       BADGES.map(function(badge) {
-        var isUnlocked = user.unlockedBadges.indexOf(badge.id) >= 0;
+        var isUnlocked = userBadges.indexOf(badge.id) >= 0;
         return '<div class="badge-card ' + (isUnlocked ? 'unlocked' : 'locked') + '">' +
           '<div class="badge-icon">' + badge.icon + '</div>' +
           '<div class="badge-name">' + badge.name + '</div>' +
@@ -188,13 +199,12 @@ function renderBadgesTab(container) {
     '</div>';
 }
 
-function renderCollectionTab(container) {
+async function renderCollectionTab(container) {
   var user = getCurrentUser();
   if (!user) return;
 
-  // Use world list as the main collection
   var courses = (typeof TOP_100_DATA !== 'undefined') ? (TOP_100_DATA.world || []) : [];
-  var played = user.playedCourses || [];
+  var played = user.playedCourses || user.played_courses || [];
   var playedCount = 0;
 
   courses.forEach(function(c) {

@@ -1038,16 +1038,12 @@ function openCourseDetail(course) {
 
 // ── 6. markCoursePlayed(courseName) ──────────────────────────
 
-function markCoursePlayed(courseName) {
+async function markCoursePlayed(courseName) {
   var user = getCurrentUser();
-  if (!user) return;
+  if (!user) { openAuth('signin'); return; }
 
-  if (!user.playedCourses) {
-    user.playedCourses = [];
-  }
-
-  // Check if already marked
-  var alreadyPlayed = user.playedCourses.some(function (c) {
+  var played = user.playedCourses || user.played_courses || [];
+  var alreadyPlayed = played.some(function(c) {
     return c.toLowerCase() === courseName.toLowerCase();
   });
 
@@ -1056,16 +1052,25 @@ function markCoursePlayed(courseName) {
     return;
   }
 
-  user.playedCourses.push(courseName);
-  saveCurrentUser(user);
-
-  awardXP(50, 'Played ' + courseName);
-  addFeedItem('course_played', { courseName: courseName });
-  checkBadges();
+  try {
+    if (USE_API) {
+      await API.markCoursePlayed(courseName);
+      // User refreshed by API client
+    } else {
+      if (!user.playedCourses) user.playedCourses = [];
+      user.playedCourses.push(courseName);
+      saveCurrentUser(user);
+      awardXP(50, 'Played ' + courseName);
+      addFeedItem('course_played', { courseName: courseName });
+    }
+  } catch (err) {
+    showToast('error', 'Failed', err.message || 'Please try again');
+    return;
+  }
 
   showToast('success', 'Course added!', courseName + ' added to your collection');
+  checkBadges();
 
-  // Re-render clubhouse if visible
   var clubhouseSection = document.getElementById('section-clubhouse');
   if (clubhouseSection && clubhouseSection.style.display !== 'none') {
     if (typeof renderClubhouse === 'function') renderClubhouse();

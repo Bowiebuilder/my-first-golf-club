@@ -77,42 +77,60 @@ var BADGES = [
   }
 ];
 
-function checkBadges() {
+async function checkBadges() {
   var user = getCurrentUser();
   if (!user) return [];
 
-  var userRounds = getRounds().filter(function(r) { return r.userId === user.email; });
-  var cards = getCards();
   var newlyUnlocked = [];
 
-  BADGES.forEach(function(badge) {
-    // Skip if already unlocked
-    if (user.unlockedBadges.indexOf(badge.id) >= 0) return;
+  try {
+    if (USE_API) {
+      var result = await API.checkBadges();
+      newlyUnlocked = (result.newlyUnlocked || []).map(function(b) {
+        // Find matching badge definition for the icon
+        var def = BADGES.find(function(d) { return d.id === b.id; });
+        return { id: b.id, name: b.name, description: b.description, icon: def ? def.icon : '&#127942;' };
+      });
+      // Refresh user (badges + XP updated server-side)
+      await API.getMe();
+    } else {
+      // localStorage mode
+      var userRounds = getRounds().filter(function(r) { return r.userId === user.email; });
+      var cards = getCards();
 
-    // Check condition
-    if (badge.check(user, userRounds, cards)) {
-      user.unlockedBadges.push(badge.id);
-      newlyUnlocked.push(badge);
-    }
-  });
-
-  if (newlyUnlocked.length > 0) {
-    saveCurrentUser(user);
-
-    // Show badge unlocks with staggered delay
-    newlyUnlocked.forEach(function(badge, i) {
-      setTimeout(function() {
-        showBadgeUnlock(badge);
-        addFeedItem('badge_unlocked', { badgeName: badge.name, badgeId: badge.id });
-        // Award XP for badge (without re-checking badges to avoid loop)
-        var u = getCurrentUser();
-        if (u) {
-          u.xp += 50;
-          u.level = getLevel(u.xp).name;
-          saveCurrentUser(u);
-          showToast('xp', '+50 XP', 'Badge unlocked: ' + badge.name);
+      BADGES.forEach(function(badge) {
+        if (user.unlockedBadges.indexOf(badge.id) >= 0) return;
+        if (badge.check(user, userRounds, cards)) {
+          user.unlockedBadges.push(badge.id);
+          newlyUnlocked.push(badge);
         }
-      }, (i + 1) * 800);
+      });
+
+      if (newlyUnlocked.length > 0) {
+        saveCurrentUser(user);
+        newlyUnlocked.forEach(function(badge, i) {
+          setTimeout(function() {
+            addFeedItem('badge_unlocked', { badgeName: badge.name, badgeId: badge.id });
+            var u = getCurrentUser();
+            if (u) {
+              u.xp += 50;
+              u.level = getLevel(u.xp).name;
+              saveCurrentUser(u);
+              showToast('xp', '+50 XP', 'Badge unlocked: ' + badge.name);
+            }
+          }, (i + 1) * 800);
+        });
+      }
+    }
+  } catch (e) {
+    // Silently fail - badges will be checked next time
+    return [];
+  }
+
+  // Show badge unlock UI for each new badge
+  if (newlyUnlocked.length > 0) {
+    newlyUnlocked.forEach(function(badge, i) {
+      setTimeout(function() { showBadgeUnlock(badge); }, (i + 1) * 800);
     });
   }
 
