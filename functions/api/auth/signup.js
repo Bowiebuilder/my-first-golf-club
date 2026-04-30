@@ -17,7 +17,7 @@ export async function onRequestPost({ request, env }) {
   // Hash password and create user
   const passwordHash = await hashPassword(password);
   const result = await db.prepare(
-    'INSERT INTO users (email, name, password_hash, xp, level) VALUES (?, ?, ?, 100, ?)'
+    'INSERT INTO users (email, name, password_hash, xp, level) VALUES (?, ?, ?, ?, ?)'
   ).bind(email, name, passwordHash, 100, 'Starter').run();
 
   const userId = result.meta.last_row_id;
