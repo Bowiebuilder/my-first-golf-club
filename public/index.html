@@ -9,11 +9,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <!-- Clerk UI bundle (must load before clerk-js) -->
   <script
-    async
+    defer
+    crossorigin="anonymous"
+    src="https://noted-sturgeon-84.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js"
+    type="text/javascript"
+  ></script>
+  <!-- Clerk JS SDK -->
+  <script
+    defer
     crossorigin="anonymous"
     data-clerk-publishable-key="pk_test_bm90ZWQtc3R1cmdlb24tODQuY2xlcmsuYWNjb3VudHMuZGV2JA"
-    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    src="https://noted-sturgeon-84.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
     type="text/javascript"
   ></script>
 </head>
@@ -72,9 +80,12 @@
     </div>
   </nav>
 
-  <!-- Auth is handled by Clerk's built-in modal (openSignIn/openSignUp) -->
-  <!-- Keeping a hidden div for legacy modal close handlers -->
-  <div class="modal-overlay" id="authModal" style="display:none;"></div>
+  <!-- ===== AUTH MODAL (Clerk mounts here) ===== -->
+  <div class="modal-overlay" id="authModal" style="display:none;">
+    <div class="modal modal-auth" style="padding:0;max-width:480px;overflow:visible;background:transparent;box-shadow:none;">
+      <div id="clerk-auth-mount"></div>
+    </div>
+  </div>
 
   <!-- ===== HERO SECTION ===== -->
   <section class="section hero-section" id="section-hero">

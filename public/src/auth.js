@@ -7,14 +7,16 @@
 
 var _clerkReady = false;
 var _clerkInstance = null;
+var _authMode = null; // 'signin' or 'signup'
 
-// Wait for Clerk to load and initialize
+// Wait for Clerk to load and initialize with UI bundle
 async function initClerk() {
-  var maxWait = 10000;
+  // Wait for Clerk global to appear (set by the defer script tag)
+  var maxWait = 15000;
   var waited = 0;
   while (!window.Clerk && waited < maxWait) {
-    await new Promise(function(r) { setTimeout(r, 100); });
-    waited += 100;
+    await new Promise(function(r) { setTimeout(r, 150); });
+    waited += 150;
   }
 
   if (!window.Clerk) {
@@ -23,17 +25,33 @@ async function initClerk() {
   }
 
   try {
-    await window.Clerk.load();
+    // Load Clerk with the UI constructor (from the separate UI bundle)
+    var loadOptions = {};
+    if (window.__internal_ClerkUICtor) {
+      loadOptions.ui = { ClerkUI: window.__internal_ClerkUICtor };
+    }
+    await window.Clerk.load(loadOptions);
+
     _clerkInstance = window.Clerk;
     _clerkReady = true;
 
     // Listen for auth state changes
     _clerkInstance.addListener(function() {
       updateAuthUI();
-      // If user just signed in and there's a pending card, process it
-      if (_clerkInstance.user && typeof _pendingCardData !== 'undefined' && _pendingCardData) {
-        showToast('success', 'Welcome!', 'Saving your card now...');
-        setTimeout(function() { processPendingCard(); }, 500);
+
+      // If user just signed in
+      if (_clerkInstance.user) {
+        // Close our modal
+        var modal = document.getElementById('authModal');
+        if (modal && modal.style.display !== 'none') {
+          closeAuth();
+        }
+
+        // If there's a pending card from the form flow, process it
+        if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
+          showToast('success', 'Welcome!', 'Saving your card now...');
+          setTimeout(function() { processPendingCard(); }, 500);
+        }
       }
     });
 
@@ -87,54 +105,58 @@ function saveCurrentUser(user) {
   if (USE_API) API._user = user;
 }
 
-// Open Clerk's auth UI
+// Open auth - mount Clerk SignIn/SignUp into our modal
 function openAuth(mode) {
   if (!_clerkReady || !_clerkInstance) {
-    showToast('error', 'Loading...', 'Authentication is loading, please try again in a moment');
+    showToast('error', 'Loading...', 'Authentication is still loading. Please try again in a moment.');
     return;
   }
+
+  _authMode = mode;
+  var modal = document.getElementById('authModal');
+  var mount = document.getElementById('clerk-auth-mount');
+  if (!modal || !mount) return;
 
   // Show context toast if triggered from card submission
   if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
     showToast('success', 'Almost there!', 'Sign in to save your card to the community');
   }
 
-  var clerkOptions = {
-    appearance: {
-      variables: {
-        colorPrimary: '#1a5e3a',
-        fontFamily: 'Inter, sans-serif',
-        borderRadius: '12px'
-      }
+  // Clear previous mount
+  mount.innerHTML = '';
+
+  var appearance = {
+    variables: {
+      colorPrimary: '#1a5e3a',
+      fontFamily: 'Inter, -apple-system, sans-serif',
+      borderRadius: '12px'
     }
   };
 
-  // Use Clerk's redirect method - works reliably with the CDN bundle
-  // After auth completes, Clerk redirects back to our site and the
-  // addListener callback detects the signed-in user
-  try {
-    if (mode === 'signin') {
-      _clerkInstance.redirectToSignIn({ redirectUrl: window.location.href });
-    } else {
-      _clerkInstance.redirectToSignUp({ redirectUrl: window.location.href });
-    }
-  } catch (e) {
-    console.error('Clerk auth error:', e);
-    showToast('error', 'Auth unavailable', 'Please refresh the page and try again');
+  if (mode === 'signin') {
+    _clerkInstance.mountSignIn(mount, { appearance: appearance });
+  } else {
+    _clerkInstance.mountSignUp(mount, { appearance: appearance });
   }
+
+  modal.style.display = 'flex';
 }
 
 function closeAuth() {
-  if (_clerkReady && _clerkInstance) {
-    try { _clerkInstance.closeSignIn(); } catch (e) {}
-    try { _clerkInstance.closeSignUp(); } catch (e) {}
-  }
-  // Also hide our custom modal overlay if it was shown
   var modal = document.getElementById('authModal');
-  if (modal) modal.style.display = 'none';
+  var mount = document.getElementById('clerk-auth-mount');
 
-  // Clear pending card if user dismisses
-  if (typeof _pendingCardData !== 'undefined') {
+  if (_clerkReady && _clerkInstance && mount) {
+    try { _clerkInstance.unmountSignIn(mount); } catch (e) {}
+    try { _clerkInstance.unmountSignUp(mount); } catch (e) {}
+    mount.innerHTML = '';
+  }
+
+  if (modal) modal.style.display = 'none';
+  _authMode = null;
+
+  // Clear pending card if user dismisses without signing in
+  if (!getCurrentUser() && typeof _pendingCardData !== 'undefined') {
     _pendingCardData = null;
     _pendingCardType = null;
   }
@@ -192,4 +214,4 @@ function closeUserDropdown() {
 
 // Legacy functions kept for HTML onclick compatibility
 function handleAuth(event, mode) { if (event) event.preventDefault(); openAuth(mode); return false; }
-function toggleAuthMode(mode) { openAuth(mode); }
+function toggleAuthMode(mode) { closeAuth(); setTimeout(function() { openAuth(mode); }, 100); }
