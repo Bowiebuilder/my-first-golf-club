@@ -87,37 +87,40 @@ function saveCurrentUser(user) {
   if (USE_API) API._user = user;
 }
 
-// Open Clerk's built-in auth modal
+// Open Clerk's auth UI
 function openAuth(mode) {
-  if (_clerkReady && _clerkInstance) {
-    // Show context toast if triggered from card submission
-    if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
-      showToast('success', 'Almost there!', 'Sign in to save your card to the community');
-    }
-
-    if (mode === 'signin') {
-      _clerkInstance.openSignIn({
-        appearance: {
-          variables: {
-            colorPrimary: '#1a5e3a',
-            fontFamily: 'Inter, sans-serif',
-            borderRadius: '12px'
-          }
-        }
-      });
-    } else {
-      _clerkInstance.openSignUp({
-        appearance: {
-          variables: {
-            colorPrimary: '#1a5e3a',
-            fontFamily: 'Inter, sans-serif',
-            borderRadius: '12px'
-          }
-        }
-      });
-    }
-  } else {
+  if (!_clerkReady || !_clerkInstance) {
     showToast('error', 'Loading...', 'Authentication is loading, please try again in a moment');
+    return;
+  }
+
+  // Show context toast if triggered from card submission
+  if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
+    showToast('success', 'Almost there!', 'Sign in to save your card to the community');
+  }
+
+  var clerkOptions = {
+    appearance: {
+      variables: {
+        colorPrimary: '#1a5e3a',
+        fontFamily: 'Inter, sans-serif',
+        borderRadius: '12px'
+      }
+    }
+  };
+
+  // Use Clerk's redirect method - works reliably with the CDN bundle
+  // After auth completes, Clerk redirects back to our site and the
+  // addListener callback detects the signed-in user
+  try {
+    if (mode === 'signin') {
+      _clerkInstance.redirectToSignIn({ redirectUrl: window.location.href });
+    } else {
+      _clerkInstance.redirectToSignUp({ redirectUrl: window.location.href });
+    }
+  } catch (e) {
+    console.error('Clerk auth error:', e);
+    showToast('error', 'Auth unavailable', 'Please refresh the page and try again');
   }
 }
 
