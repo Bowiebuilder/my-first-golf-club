@@ -277,29 +277,16 @@ async function _saveCard(data, type) {
     return;
   }
 
-  // Show success modal
-  var modalCard = document.getElementById('modalCard');
-  if (modalCard) modalCard.innerHTML = renderCardHTML(card);
-
-  var xpEl = document.getElementById('successXP');
-  if (xpEl) {
-    xpEl.innerHTML = isEdit
-      ? '<span style="color:var(--green);font-weight:600;">Card updated successfully!</span>'
-      : '<span style="color:var(--gold);font-family:var(--font-accent);font-size:20px;">+100 XP</span> for creating your card!';
+  // Launch celebration!
+  if (typeof showCelebration === 'function') {
+    showCelebration(card, isEdit);
   }
-
-  if (isEdit) {
-    showToast('success', 'Card updated', 'Your playing card has been updated');
-  }
-
-  var modal = document.getElementById('successModal');
-  if (modal) modal.style.display = 'flex';
 
   // Reset form
   _resetForm(type);
 
-  // Check badges
-  setTimeout(function() { checkBadges(); }, 1200);
+  // Check badges after celebration has time to show
+  setTimeout(function() { checkBadges(); }, 2000);
 }
 
 function _resetForm(type) {

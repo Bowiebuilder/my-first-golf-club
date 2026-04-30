@@ -3831,6 +3831,227 @@ a {
 }
 
 /* ============================================
+   CELEBRATION / SUCCESS OVERLAY
+   Full-screen celebration when a card is created
+   ============================================ */
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(13, 53, 32, 0.95);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  animation: celebrationFadeIn 0.5s ease;
+}
+
+@keyframes celebrationFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.celebration-confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  top: -20px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.celebration-content {
+  position: relative;
+  z-index: 2;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: celebrationSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes celebrationSlideUp {
+  from { opacity: 0; transform: translateY(40px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.celebration-header {
+  margin-bottom: 24px;
+}
+
+.celebration-badge-anim {
+  font-size: 56px;
+  display: inline-block;
+  animation: celebrationBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s both;
+}
+
+@keyframes celebrationBounce {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.celebration-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 900;
+  color: #fff;
+  margin: 12px 0 8px;
+  animation: celebrationSlideUp 0.6s ease 0.5s both;
+}
+
+.celebration-subtitle {
+  font-size: 16px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.6;
+  animation: celebrationSlideUp 0.6s ease 0.6s both;
+}
+
+.celebration-card-reveal {
+  position: relative;
+  margin: 28px auto;
+  display: inline-block;
+  animation: cardReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.7s both;
+}
+
+@keyframes cardReveal {
+  0% { transform: scale(0.3) rotateY(40deg); opacity: 0; }
+  60% { transform: scale(1.05) rotateY(-5deg); opacity: 1; }
+  100% { transform: scale(1) rotateY(0); opacity: 1; }
+}
+
+.celebration-glow {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(ellipse, rgba(201, 168, 76, 0.25) 0%, transparent 70%);
+  border-radius: 30px;
+  animation: glowPulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.celebration-xp {
+  margin: 16px 0;
+  animation: celebrationSlideUp 0.5s ease 1s both;
+}
+
+.xp-earned {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-family: var(--font-accent);
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  color: var(--gold);
+  animation: xpPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s both;
+}
+
+@keyframes xpPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.xp-earned-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0;
+}
+
+.celebration-share {
+  margin: 24px 0;
+  animation: celebrationSlideUp 0.5s ease 1.1s both;
+}
+
+.celebration-share-label {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.celebration-share-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.share-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+  transform: translateY(-1px);
+}
+
+.share-btn-x:hover { border-color: #fff; }
+.share-btn-copy:hover { border-color: var(--gold); color: var(--gold); }
+.share-btn-download:hover { border-color: var(--green-light); color: var(--green-light); }
+
+.celebration-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 28px;
+  animation: celebrationSlideUp 0.5s ease 1.3s both;
+}
+
+.celebration-actions .btn-primary {
+  min-width: 260px;
+}
+
+.celebration-actions .btn-ghost-light {
+  color: rgba(255,255,255,0.6);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.celebration-actions .btn-ghost-light:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.08);
+}
+
+/* ============================================
    DESKTOP LAYOUT (min-width: 1024px)
    Transforms the mobile-first layout into a
    proper desktop experience

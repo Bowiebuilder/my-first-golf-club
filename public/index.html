@@ -351,17 +351,48 @@
     </div>
   </section>
 
-  <!-- ===== SUCCESS MODAL ===== -->
-  <div class="modal-overlay" id="successModal" style="display:none;">
-    <div class="modal">
-      <div class="modal-icon">&#9971;</div>
-      <h3 class="modal-title">Welcome to the Community!</h3>
-      <p class="modal-text">Your card has been added to the registry. You're now part of the global golf origin story.</p>
-      <div class="modal-card" id="modalCard"></div>
-      <div class="modal-xp" id="successXP"></div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" onclick="showSection('community'); closeModal()">View Community Wall</button>
-        <button class="btn btn-ghost" onclick="showSection('clubhouse'); closeModal()">Go to My Clubhouse</button>
+  <!-- ===== SUCCESS / CELEBRATION OVERLAY ===== -->
+  <div class="celebration-overlay" id="successModal" style="display:none;">
+    <div class="celebration-confetti" id="celebrationConfetti"></div>
+    <div class="celebration-content">
+      <div class="celebration-header">
+        <div class="celebration-badge-anim" id="celebrationBadge">&#9971;</div>
+        <h2 class="celebration-title" id="celebrationTitle">You're in the Club!</h2>
+        <p class="celebration-subtitle" id="celebrationSubtitle">Your card has joined the global registry of golf origin stories.</p>
+      </div>
+
+      <div class="celebration-card-reveal" id="celebrationCard">
+        <div class="celebration-glow"></div>
+        <div id="modalCard"></div>
+      </div>
+
+      <div class="celebration-xp" id="successXP"></div>
+
+      <div class="celebration-share">
+        <p class="celebration-share-label">Share your card with the world</p>
+        <div class="celebration-share-buttons">
+          <button class="share-btn share-btn-x" onclick="shareToX()" title="Share on X / Twitter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            <span>Share on X</span>
+          </button>
+          <button class="share-btn share-btn-copy" onclick="copyCardLink()" title="Copy link">
+            <span>&#128279;</span>
+            <span>Copy Link</span>
+          </button>
+          <button class="share-btn share-btn-download" onclick="downloadCard()" title="Download as image">
+            <span>&#128248;</span>
+            <span>Save Image</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="celebration-actions">
+        <button class="btn btn-primary btn-lg" onclick="showSection('community'); closeModal()">
+          View Community Wall &rarr;
+        </button>
+        <button class="btn btn-ghost-light" onclick="showSection('clubhouse'); closeModal()">
+          Go to My Clubhouse
+        </button>
       </div>
     </div>
   </div>
@@ -666,6 +697,7 @@
   <script src="src/top100.js"></script>
   <script src="src/navigation.js"></script>
   <script src="src/forms.js"></script>
+  <script src="src/celebrate.js"></script>
   <script src="src/community.js"></script>
   <script src="src/rounds.js"></script>
   <script src="src/clubhouse.js"></script>
