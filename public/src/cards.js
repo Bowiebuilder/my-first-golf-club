@@ -12,6 +12,12 @@ function renderCardHTML(card) {
   var theme = card.cardColor || 'green';
   var border = card.borderStyle || 'gold';
   var isPlayer = card.type === 'player';
+
+  // Country flag (uses ISO code -> SVG flag from flagcdn.com for crisp rendering)
+  var natCode = (card.nationalityCode || '').toLowerCase();
+  var flagHTML = natCode
+    ? '<img class="card-flag" src="https://flagcdn.com/w80/' + natCode + '.png" srcset="https://flagcdn.com/w160/' + natCode + '.png 2x" alt="' + (card.nationality || '') + ' flag" loading="lazy">'
+    : '';
   var yearLabel = isPlayer
     ? 'Since ' + (card.yearStarted || '----')
     : 'Est. ' + (card.yearStarted || '----');
@@ -72,7 +78,10 @@ function renderCardHTML(card) {
       '<div class="golf-card-face card-front">' +
         '<div class="card-top-bar">' +
           '<span class="card-type-badge">' + (isPlayer ? 'PLAYER CARD' : 'CLUB CARD') + '</span>' +
-          (hasTop100 ? '<span class="top100-verified-badge" style="font-size:8px;padding:2px 6px;">TOP 100</span>' : '') +
+          '<div class="card-top-right">' +
+            (hasTop100 ? '<span class="top100-verified-badge" style="font-size:8px;padding:2px 6px;">TOP 100</span>' : '') +
+            flagHTML +
+          '</div>' +
         '</div>' +
         '<div class="card-photo-area">' + photoHTML + '</div>' +
         '<div class="card-name-area">' +

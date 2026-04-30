@@ -422,11 +422,38 @@ async function editCard() {
 
     var fields = ['name', 'yearStarted', 'ageStarted', 'firstCourse', 'location',
                   'handicap', 'introducedBy', 'story', 'orgType', 'signatureCourse',
-                  'memberCount', 'founder', 'holes'];
+                  'memberCount', 'founder', 'holes',
+                  'nationality', 'nationalityCode', 'firstCourseCountry',
+                  'localCourse', 'dreamPartner', 'dreamCourse', 'borderStyle'];
     fields.forEach(function(field) {
       var input = form.querySelector('[name="' + field + '"]');
       if (input && card[field]) input.value = card[field];
     });
+
+    // Split full name into firstName / lastName for the wizard
+    if (card.type === 'player' && card.name) {
+      var parts = card.name.trim().split(/\s+/);
+      var firstInput = form.querySelector('input[name="firstName"]');
+      var lastInput = form.querySelector('input[name="lastName"]');
+      if (firstInput && parts.length > 0) firstInput.value = parts[0];
+      if (lastInput && parts.length > 1) lastInput.value = parts.slice(1).join(' ');
+      // Also set the hidden full-name field so the API sees it
+      var hidden = document.getElementById('fullNameHidden');
+      if (hidden) hidden.value = card.name;
+    }
+
+    // Populate nationality combobox visible input
+    if (card.nationality) {
+      var natInput = document.getElementById('nationalityInput');
+      if (natInput) natInput.value = card.nationality;
+    }
+    if (card.firstCourseCountry) {
+      var fcInput = document.getElementById('firstCourseCountryInput');
+      if (fcInput) fcInput.value = card.firstCourseCountry;
+    }
+
+    // Reset wizard to step 1 on edit
+    if (typeof _showStep === 'function') _showStep(1);
 
     if (card.favClub) {
       var radio = form.querySelector('input[name="favClub"][value="' + card.favClub + '"]');

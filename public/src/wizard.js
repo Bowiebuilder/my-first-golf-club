@@ -61,31 +61,133 @@ var COUNTRIES = [
   { code: 'NG', name: 'Nigeria', flag: '🇳🇬' }
 ];
 
-function _populateCountryDropdowns() {
+function _populateAgeAndYearDropdowns() {
+  var ageSelect = document.getElementById('ageStartedSelect');
+  if (ageSelect && ageSelect.options.length <= 1) {
+    // Common ranges: 1-12 (kids), 13-25 (teens/young adults), then bands
+    var ages = [];
+    for (var i = 1; i <= 99; i++) ages.push(i);
+    ages.forEach(function(a) {
+      var opt = document.createElement('option');
+      opt.value = a;
+      opt.textContent = a + (a === 1 ? ' year old' : ' years old');
+      ageSelect.appendChild(opt);
+    });
+  }
+
+  var yearSelect = document.getElementById('yearStartedSelect');
+  if (yearSelect && yearSelect.options.length <= 1) {
+    var nowYear = new Date().getFullYear();
+    // Most recent first
+    for (var y = nowYear; y >= 1930; y--) {
+      var opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      yearSelect.appendChild(opt);
+    }
+    // Add an "Earlier" option for older players
+    var earlier = document.createElement('option');
+    earlier.value = '1929';
+    earlier.textContent = 'Before 1930';
+    yearSelect.appendChild(earlier);
+  }
+}
+
+// --- Country combobox (searchable, allows custom entry) ---
+function _setupCountryCombobox(opts) {
+  var input = document.getElementById(opts.inputId);
+  var list = document.getElementById(opts.listId);
+  var codeHidden = opts.codeHiddenId ? document.getElementById(opts.codeHiddenId) : null;
+  var nameHidden = opts.nameHiddenId ? document.getElementById(opts.nameHiddenId) : null;
+  if (!input || !list) return;
+
   var sorted = COUNTRIES.slice().sort(function(a, b) { return a.name.localeCompare(b.name); });
 
-  var natSelect = document.getElementById('nationalitySelect');
-  var firstSelect = document.getElementById('firstCourseCountrySelect');
+  function render(filter) {
+    filter = (filter || '').toLowerCase().trim();
+    var matches = filter
+      ? sorted.filter(function(c) { return c.name.toLowerCase().indexOf(filter) >= 0; })
+      : sorted;
 
-  if (natSelect && natSelect.options.length <= 1) {
-    sorted.forEach(function(c) {
-      var opt = document.createElement('option');
-      opt.value = c.name;
-      opt.dataset.code = c.code;
-      opt.textContent = c.flag + '  ' + c.name;
-      natSelect.appendChild(opt);
+    if (matches.length === 0) {
+      list.innerHTML = '<div class="combobox-empty">No matches &mdash; press Enter to use "' + escapeHtml(filter) + '"</div>';
+    } else {
+      list.innerHTML = matches.slice(0, 80).map(function(c) {
+        return '<div class="combobox-item" data-name="' + escapeHtml(c.name) + '" data-code="' + c.code + '">' +
+               '<span class="combobox-flag">' + c.flag + '</span>' +
+               '<span class="combobox-name">' + escapeHtml(c.name) + '</span>' +
+               '</div>';
+      }).join('');
+    }
+    list.style.display = 'block';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(ch) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
     });
   }
 
-  if (firstSelect && firstSelect.options.length <= 1) {
-    sorted.forEach(function(c) {
-      var opt = document.createElement('option');
-      opt.value = c.name;
-      opt.dataset.code = c.code;
-      opt.textContent = c.flag + '  ' + c.name;
-      firstSelect.appendChild(opt);
-    });
+  function pick(name, code) {
+    input.value = name;
+    if (codeHidden) codeHidden.value = code || '';
+    if (nameHidden) nameHidden.value = name;
+    list.style.display = 'none';
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
   }
+
+  input.addEventListener('focus', function() { render(input.value); });
+  input.addEventListener('input', function() {
+    // User typed: clear any previously stored ISO code unless an exact match
+    var typed = input.value.trim().toLowerCase();
+    var exact = sorted.find(function(c) { return c.name.toLowerCase() === typed; });
+    if (codeHidden) codeHidden.value = exact ? exact.code : '';
+    if (nameHidden) nameHidden.value = input.value;
+    render(input.value);
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // If a single match in the list, pick it; otherwise keep what user typed
+      var first = list.querySelector('.combobox-item');
+      if (first) {
+        pick(first.dataset.name, first.dataset.code);
+      } else {
+        list.style.display = 'none';
+        if (nameHidden) nameHidden.value = input.value;
+      }
+    } else if (e.key === 'Escape') {
+      list.style.display = 'none';
+    }
+  });
+
+  list.addEventListener('mousedown', function(e) {
+    var item = e.target.closest('.combobox-item');
+    if (!item) return;
+    e.preventDefault();
+    pick(item.dataset.name, item.dataset.code);
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!input.contains(e.target) && !list.contains(e.target)) {
+      list.style.display = 'none';
+    }
+  });
+}
+
+function _populateCountryDropdowns() {
+  _setupCountryCombobox({
+    inputId: 'nationalityInput',
+    listId: 'nationalityList',
+    codeHiddenId: 'nationalityCodeHidden',
+    nameHiddenId: 'nationalityHidden'
+  });
+  _setupCountryCombobox({
+    inputId: 'firstCourseCountryInput',
+    listId: 'firstCourseCountryList'
+  });
 }
 
 function _showStep(step) {
@@ -123,27 +225,45 @@ function _validateCurrentStep() {
   var stepEl = document.querySelector('.wizard-step.active');
   if (!stepEl) return true;
 
-  var requiredInputs = stepEl.querySelectorAll('input[required], select[required], textarea[required]');
   var firstInvalid = null;
-  requiredInputs.forEach(function(inp) {
-    if (!inp.value || inp.value.trim() === '') {
-      var grp = inp.closest('.form-group');
-      if (grp) grp.classList.add('has-error');
-      if (!firstInvalid) firstInvalid = inp;
-    } else {
-      var grp = inp.closest('.form-group');
-      if (grp) grp.classList.remove('has-error');
-    }
+
+  function markInvalid(input) {
+    var grp = input.closest('.form-group');
+    if (grp) grp.classList.add('has-error');
+    if (!firstInvalid) firstInvalid = input;
+  }
+  function markValid(input) {
+    var grp = input.closest('.form-group');
+    if (grp) grp.classList.remove('has-error');
+  }
+
+  // Generic required check (any input/select/textarea with required attr)
+  stepEl.querySelectorAll('input[required], select[required], textarea[required]').forEach(function(inp) {
+    if (!inp.value || inp.value.trim() === '') markInvalid(inp);
+    else markValid(inp);
   });
 
   // Step-specific validation
   if (_currentStep === 2) {
-    var year = stepEl.querySelector('input[name="yearStarted"]');
-    if (year && (!year.value || parseInt(year.value) < 1800 || parseInt(year.value) > new Date().getFullYear())) {
-      var grp = year.closest('.form-group');
-      if (grp) grp.classList.add('has-error');
-      if (!firstInvalid) firstInvalid = year;
-    }
+    var year = stepEl.querySelector('select[name="yearStarted"]');
+    if (year && !year.value) markInvalid(year);
+  }
+
+  if (_currentStep === 5) {
+    // First name + last name both required (Step 5)
+    var first = stepEl.querySelector('input[name="firstName"]');
+    var last = stepEl.querySelector('input[name="lastName"]');
+    if (first && (!first.value || first.value.trim().length < 1)) markInvalid(first);
+    else if (first) markValid(first);
+    if (last && (!last.value || last.value.trim().length < 1)) markInvalid(last);
+    else if (last) markValid(last);
+  }
+
+  if (_currentStep === 7) {
+    // Story required
+    var story = stepEl.querySelector('textarea[name="story"]');
+    if (story && (!story.value || story.value.trim().length < 10)) markInvalid(story);
+    else if (story) markValid(story);
   }
 
   if (firstInvalid) {
@@ -173,41 +293,28 @@ function _resetWizard() {
   _showStep(1);
 }
 
+// Combine first+last name into the hidden "name" field for backend compatibility
+function _setupFullNameSync() {
+  var first = document.querySelector('#playerForm input[name="firstName"]');
+  var last = document.querySelector('#playerForm input[name="lastName"]');
+  var hidden = document.getElementById('fullNameHidden');
+  if (!first || !last || !hidden) return;
+
+  function update() {
+    var full = (first.value.trim() + ' ' + last.value.trim()).trim();
+    hidden.value = full;
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
+  }
+  first.addEventListener('input', update);
+  last.addEventListener('input', update);
+}
+
 // Initialize on DOM ready
 function _initWizard() {
+  _populateAgeAndYearDropdowns();
   _populateCountryDropdowns();
+  _setupFullNameSync();
   _showStep(1);
-
-  // When nationality changes, store the country code for flag rendering on card
-  var natSelect = document.getElementById('nationalitySelect');
-  if (natSelect) {
-    natSelect.addEventListener('change', function() {
-      var opt = natSelect.options[natSelect.selectedIndex];
-      var code = opt ? opt.dataset.code : '';
-      // Stash on the form so getFormData can pick it up
-      var form = document.getElementById('playerForm');
-      if (form) {
-        var hidden = form.querySelector('input[name="nationalityCode"]');
-        if (!hidden) {
-          hidden = document.createElement('input');
-          hidden.type = 'hidden';
-          hidden.name = 'nationalityCode';
-          form.appendChild(hidden);
-        }
-        hidden.value = code || '';
-        // Also stash nationality name (for backward compat)
-        var natHidden = form.querySelector('input[name="nationality"]');
-        if (!natHidden) {
-          natHidden = document.createElement('input');
-          natHidden.type = 'hidden';
-          natHidden.name = 'nationality';
-          form.appendChild(natHidden);
-        }
-        natHidden.value = natSelect.value;
-      }
-      if (typeof renderPreviewCard === 'function') renderPreviewCard();
-    });
-  }
 }
 
 if (document.readyState === 'loading') {
