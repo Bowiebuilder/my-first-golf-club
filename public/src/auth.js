@@ -1,26 +1,85 @@
 /* ============================================
    AUTH SYSTEM - src/auth.js
-   Uses API client with localStorage fallback
-   Depends on: storage.js, api.js, toasts.js, xp.js, navigation.js
+   Uses Clerk for authentication (Google, Apple, Facebook, Email)
+   Falls back to localStorage when Clerk is unavailable
+   Depends on: storage.js, api.js, toasts.js, navigation.js
    ============================================ */
 
-// Whether to use API (true when deployed) or localStorage (local dev fallback)
-var USE_API = (typeof API !== 'undefined');
+var _clerkReady = false;
+var _clerkInstance = null;
 
-function simpleHash(str) {
-  var hash = 0;
-  for (var i = 0; i < str.length; i++) {
-    var ch = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + ch;
-    hash |= 0;
+// Wait for Clerk to load and initialize
+async function initClerk() {
+  // Clerk SDK loads async via script tag, sets window.Clerk
+  var maxWait = 10000;
+  var waited = 0;
+  while (!window.Clerk && waited < maxWait) {
+    await new Promise(function(r) { setTimeout(r, 100); });
+    waited += 100;
   }
-  return hash.toString(36);
+
+  if (!window.Clerk) {
+    console.warn('Clerk SDK did not load - falling back to localStorage auth');
+    return;
+  }
+
+  try {
+    // Clerk auto-initializes from the script tag's data-clerk-publishable-key
+    // Wait for it to be ready
+    await window.Clerk.load();
+    _clerkInstance = window.Clerk;
+    _clerkReady = true;
+
+    // Listen for auth state changes
+    _clerkInstance.addListener(function(event) {
+      updateAuthUI();
+      // If user just signed in and there's a pending card, process it
+      if (_clerkInstance.user && typeof _pendingCardData !== 'undefined' && _pendingCardData) {
+        closeAuth();
+        showToast('success', 'Welcome!', 'Saving your card now...');
+        setTimeout(function() { processPendingCard(); }, 300);
+      } else if (_clerkInstance.user) {
+        closeAuth();
+      }
+    });
+
+    updateAuthUI();
+  } catch (e) {
+    console.warn('Clerk initialization failed:', e);
+  }
 }
 
+// Get the current user - prefers API._user (D1 data), then Clerk, then localStorage
 function getCurrentUser() {
-  // Check API cache first
-  if (USE_API && API._user) return API._user;
-  // Fallback to localStorage
+  // If we have synced D1 data via API, use that (has XP, badges, card_id etc)
+  if (USE_API && API._user) {
+    var u = API._user;
+    return {
+      id: u.id, email: u.email, name: u.name,
+      xp: u.xp || 0, level: u.level || 'Starter',
+      cardId: u.card_id, card_id: u.card_id,
+      playedCourses: u.played_courses || [], played_courses: JSON.stringify(u.played_courses || []),
+      unlockedBadges: u.unlocked_badges || [], unlocked_badges: JSON.stringify(u.unlocked_badges || []),
+      createdAt: u.created_at, created_at: u.created_at
+    };
+  }
+
+  // Clerk user present but no D1 sync yet
+  if (_clerkReady && _clerkInstance && _clerkInstance.user) {
+    var cu = _clerkInstance.user;
+    return {
+      id: cu.id,
+      email: cu.primaryEmailAddress ? cu.primaryEmailAddress.emailAddress : '',
+      name: cu.fullName || cu.firstName || 'User',
+      xp: 0, level: 'Starter',
+      cardId: null, card_id: null,
+      playedCourses: [], played_courses: '[]',
+      unlockedBadges: [], unlocked_badges: '[]',
+      createdAt: cu.createdAt, created_at: cu.createdAt
+    };
+  }
+
+  // localStorage fallback
   var email = localStorage.getItem(STORAGE_SESSION);
   if (!email) return null;
   var users = getUsers();
@@ -32,158 +91,79 @@ function saveCurrentUser(user) {
   var users = getUsers();
   var idx = users.findIndex(function(u) { return u.email === user.email; });
   if (idx >= 0) { users[idx] = user; saveUsers(users); }
-  // Update API cache
   if (USE_API) API._user = user;
 }
 
-async function handleAuth(event, mode) {
-  event.preventDefault();
-  var form = mode === 'signup'
-    ? document.getElementById('signupForm')
-    : document.getElementById('signinForm');
-  var fd = new FormData(form);
-
-  if (mode === 'signup') {
-    var name = fd.get('fullName');
-    var email = fd.get('email');
-    var pw = fd.get('password');
-    var pw2 = fd.get('confirmPassword');
-
-    if (pw !== pw2) {
-      showToast('error', 'Passwords don\'t match', 'Please check your passwords');
-      return false;
-    }
-
-    try {
-      if (USE_API) {
-        var data = await API.signup(name, email, pw);
-        // Also cache in localStorage for offline compatibility
-        var localUser = Object.assign({}, data.user, {
-          passwordHash: simpleHash(pw),
-          playedCourses: data.user.played_courses || [],
-          unlockedBadges: data.user.unlocked_badges || [],
-          cardId: data.user.card_id
-        });
-        var users = getUsers();
-        users.push(localUser);
-        saveUsers(users);
-        localStorage.setItem(STORAGE_SESSION, email);
-      } else {
-        // Pure localStorage mode
-        var users = getUsers();
-        if (users.find(function(u) { return u.email === email; })) {
-          showToast('error', 'Email taken', 'An account with this email already exists');
-          return false;
-        }
-        var localUser = {
-          email: email, name: name, passwordHash: simpleHash(pw),
-          createdAt: new Date().toISOString(), xp: 0, level: 'Starter',
-          cardId: null, playedCourses: [], unlockedBadges: []
-        };
-        users.push(localUser);
-        saveUsers(users);
-        localStorage.setItem(STORAGE_SESSION, email);
-        awardXP(100, 'Joining the club');
-      }
-    } catch (err) {
-      showToast('error', 'Signup failed', err.message || 'Please try again');
-      return false;
-    }
-
-    closeAuth();
-    updateAuthUI();
-
-    if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
-      showToast('success', 'Welcome to the club!', 'Saving your card now...');
-      setTimeout(function() { processPendingCard(); }, 300);
-    } else {
-      showSection('submit');
-      showToast('success', 'Welcome to the club!', 'Now create your playing card');
-    }
-
-  } else {
-    // Sign in
-    var email2 = fd.get('email');
-    var pw3 = fd.get('password');
-
-    try {
-      if (USE_API) {
-        var data = await API.signin(email2, pw3);
-        // Cache locally
-        localStorage.setItem(STORAGE_SESSION, email2);
-      } else {
-        var users2 = getUsers();
-        var found = users2.find(function(u) { return u.email === email2; });
-        if (!found || found.passwordHash !== simpleHash(pw3)) {
-          showToast('error', 'Invalid credentials', 'Check your email and password');
-          return false;
-        }
-        localStorage.setItem(STORAGE_SESSION, email2);
-      }
-    } catch (err) {
-      showToast('error', 'Sign in failed', err.message || 'Check your credentials');
-      return false;
-    }
-
-    closeAuth();
-    updateAuthUI();
-
-    var user = getCurrentUser();
-    if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
-      showToast('success', 'Welcome back!', 'Saving your card now...');
-      setTimeout(function() { processPendingCard(); }, 300);
-    } else {
-      showToast('success', 'Welcome back!', 'Good to see you, ' + (user ? user.name : ''));
-      showSection('clubhouse');
-    }
-  }
-
-  form.reset();
-  return false;
-}
-
-async function handleSignOut() {
-  try {
-    if (USE_API) await API.signout();
-  } catch (e) { /* ignore */ }
-  localStorage.removeItem(STORAGE_SESSION);
-  if (USE_API) API._user = null;
-  updateAuthUI();
-  closeUserDropdown();
-  showSection('hero');
-  showToast('success', 'Signed out', 'See you on the fairway');
-}
-
+// Open auth modal - Clerk handles the UI
 function openAuth(mode) {
-  document.getElementById('authModal').style.display = 'flex';
-  toggleAuthMode(mode);
-  if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
-    var title = document.getElementById('authModalTitle');
-    if (title) title.textContent = 'Join to Save Your Card';
+  var modal = document.getElementById('authModal');
+  var mount = document.getElementById('clerk-auth-mount');
+
+  if (_clerkReady && _clerkInstance && mount) {
+    // Clear any previous mount
+    mount.innerHTML = '';
+
+    if (mode === 'signin') {
+      _clerkInstance.mountSignIn(mount, {
+        appearance: {
+          variables: {
+            colorPrimary: '#1a5e3a',
+            colorText: '#2c2c2c',
+            fontFamily: 'Inter, sans-serif',
+            borderRadius: '12px'
+          }
+        }
+      });
+    } else {
+      _clerkInstance.mountSignUp(mount, {
+        appearance: {
+          variables: {
+            colorPrimary: '#1a5e3a',
+            colorText: '#2c2c2c',
+            fontFamily: 'Inter, sans-serif',
+            borderRadius: '12px'
+          }
+        }
+      });
+    }
+
+    modal.style.display = 'flex';
+  } else {
+    // Clerk not ready - show a loading state or fallback
+    showToast('error', 'Loading...', 'Authentication is loading, please try again in a moment');
   }
 }
 
 function closeAuth() {
-  document.getElementById('authModal').style.display = 'none';
+  var modal = document.getElementById('authModal');
+  var mount = document.getElementById('clerk-auth-mount');
+
+  if (_clerkReady && _clerkInstance && mount) {
+    try {
+      _clerkInstance.unmountSignIn(mount);
+      _clerkInstance.unmountSignUp(mount);
+    } catch (e) { /* may not be mounted */ }
+  }
+
+  if (modal) modal.style.display = 'none';
+
+  // Clear pending card if user dismisses
   if (typeof _pendingCardData !== 'undefined') {
     _pendingCardData = null;
     _pendingCardType = null;
   }
 }
 
-function toggleAuthMode(mode) {
-  var title = document.getElementById('authModalTitle');
-  var signup = document.getElementById('signupForm');
-  var signin = document.getElementById('signinForm');
-  if (mode === 'signup') {
-    title.textContent = 'Join the Club';
-    signup.style.display = '';
-    signin.style.display = 'none';
-  } else {
-    title.textContent = 'Welcome Back';
-    signup.style.display = 'none';
-    signin.style.display = '';
+async function handleSignOut() {
+  if (_clerkReady && _clerkInstance) {
+    await _clerkInstance.signOut();
   }
+  localStorage.removeItem(STORAGE_SESSION);
+  if (USE_API) API._user = null;
+  updateAuthUI();
+  closeUserDropdown();
+  showSection('hero');
+  showToast('success', 'Signed out', 'See you on the fairway');
 }
 
 function updateAuthUI() {
@@ -199,7 +179,14 @@ function updateAuthUI() {
     if (mobileOut) mobileOut.style.display = 'none';
     if (mobileIn) mobileIn.style.display = '';
     var avatar = document.getElementById('navAvatar');
-    if (avatar) avatar.textContent = getInitials(user.name);
+    if (avatar) {
+      // Use Clerk profile image if available
+      if (_clerkReady && _clerkInstance && _clerkInstance.user && _clerkInstance.user.imageUrl) {
+        avatar.innerHTML = '<img src="' + _clerkInstance.user.imageUrl + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+      } else {
+        avatar.textContent = getInitials(user.name);
+      }
+    }
   } else {
     if (loggedOut) loggedOut.style.display = '';
     if (loggedIn) loggedIn.style.display = 'none';
@@ -217,3 +204,7 @@ function closeUserDropdown() {
   var dd = document.getElementById('navDropdown');
   if (dd) dd.classList.remove('open');
 }
+
+// Legacy functions kept as no-ops for compatibility
+function handleAuth(event, mode) { if (event) event.preventDefault(); openAuth(mode); return false; }
+function toggleAuthMode(mode) { openAuth(mode); }

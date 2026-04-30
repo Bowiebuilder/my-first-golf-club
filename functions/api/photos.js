@@ -2,7 +2,7 @@ import { json, error, requireAuth, generateId } from './_helpers.js';
 
 // POST /api/photos - upload a photo to R2
 export async function onRequestPost({ request, env }) {
-  const { user, response } = await requireAuth(request, env.DB);
+  const { user, response } = await requireAuth(request, env.DB, env);
   if (response) return response;
 
   const contentType = request.headers.get('Content-Type') || '';

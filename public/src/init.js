@@ -8,12 +8,21 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Seed demo data for localStorage fallback on first visit
   seedDemoData();
 
-  // Try to restore session from API (cookie-based)
-  if (typeof API !== 'undefined') {
+  // Initialize Clerk auth
+  if (typeof initClerk === 'function') {
+    await initClerk();
+  }
+
+  // If Clerk user exists, sync with D1 via API
+  if (_clerkReady && _clerkInstance && _clerkInstance.user && typeof API !== 'undefined') {
     try {
-      await API.getMe();
+      var dbUser = await API.getMe();
+      if (dbUser) {
+        // Merge D1 data into the user object
+        API._user = dbUser;
+      }
     } catch (e) {
-      // Not logged in or API unavailable - localStorage will handle it
+      // API sync failed - app still works with Clerk user locally
     }
   }
 
@@ -36,7 +45,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (el) {
       el.addEventListener('click', function(e) {
         if (e.target === e.currentTarget) {
-          e.target.style.display = 'none';
+          // If Clerk modal, unmount first
+          if (id === 'authModal') closeAuth();
+          else e.target.style.display = 'none';
         }
       });
     }
@@ -45,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Escape key closes modals
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+      closeAuth();
       document.querySelectorAll('.modal-overlay').forEach(function(m) {
         m.style.display = 'none';
       });

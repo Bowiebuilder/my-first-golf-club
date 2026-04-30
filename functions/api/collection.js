@@ -2,7 +2,7 @@ import { json, error, requireAuth, parseBody, awardXP, addFeedItem } from './_he
 
 // POST /api/collection - mark a course as played
 export async function onRequestPost({ request, env }) {
-  const { user, response } = await requireAuth(request, env.DB);
+  const { user, response } = await requireAuth(request, env.DB, env);
   if (response) return response;
 
   const body = await parseBody(request);
@@ -37,7 +37,7 @@ export async function onRequestPost({ request, env }) {
 
 // GET /api/collection - get user's played courses
 export async function onRequestGet({ request, env }) {
-  const { user, response } = await requireAuth(request, env.DB);
+  const { user, response } = await requireAuth(request, env.DB, env);
   if (response) return response;
 
   let playedCourses = [];

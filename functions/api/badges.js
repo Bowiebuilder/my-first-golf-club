@@ -36,7 +36,7 @@ const BADGES = [
 
 // POST /api/badges - check and award badges for current user
 export async function onRequestPost({ request, env }) {
-  const { user, response } = await requireAuth(request, env.DB);
+  const { user, response } = await requireAuth(request, env.DB, env);
   if (response) return response;
 
   const db = env.DB;
@@ -85,7 +85,7 @@ export async function onRequestPost({ request, env }) {
 
 // GET /api/badges - get badge definitions and user progress
 export async function onRequestGet({ request, env }) {
-  const { user, response } = await requireAuth(request, env.DB);
+  const { user, response } = await requireAuth(request, env.DB, env);
   if (response) return response;
 
   const userBadges = JSON.parse(user.unlocked_badges || '[]');

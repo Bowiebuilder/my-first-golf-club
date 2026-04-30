@@ -37,40 +37,69 @@ export function generateToken() {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// --- Auth middleware: extract user from session token ---
-export async function getAuthUser(request, db) {
-  const cookie = request.headers.get('Cookie') || '';
-  const match = cookie.match(/mfgc_session=([a-f0-9]+)/);
+// --- Clerk JWT verification ---
+// Verifies the Bearer token from Clerk using their JWKS endpoint
+async function verifyClerkToken(token, secretKey) {
+  // Decode the JWT header to get the key ID
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+  const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+
+  // Check expiry
+  if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+
+  // For Clerk, the 'sub' claim is the user ID
+  return payload;
+}
+
+// --- Auth middleware: verify Clerk token and find/create D1 user ---
+export async function getAuthUser(request, db, env) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const match = authHeader.match(/^Bearer (.+)$/);
   if (!match) return null;
 
   const token = match[1];
-  const session = await db.prepare(
-    "SELECT user_id FROM sessions WHERE token = ? AND expires_at > datetime('now')"
-  ).bind(token).first();
+  let clerkPayload;
+  try {
+    clerkPayload = await verifyClerkToken(token, env ? env.CLERK_SECRET_KEY : null);
+  } catch (e) {
+    return null;
+  }
+  if (!clerkPayload || !clerkPayload.sub) return null;
 
-  if (!session) return null;
+  const clerkUserId = clerkPayload.sub;
 
-  const user = await db.prepare(
-    'SELECT * FROM users WHERE id = ?'
-  ).bind(session.user_id).first();
+  // Find existing user in D1 by clerk_id
+  let user = await db.prepare('SELECT * FROM users WHERE clerk_id = ?').bind(clerkUserId).first();
 
-  return user || null;
+  // Auto-create user in D1 if this is their first API call
+  if (!user) {
+    // Extract name/email from Clerk claims if available
+    const name = clerkPayload.name || clerkPayload.first_name || 'Golfer';
+    const email = clerkPayload.email || (clerkPayload.email_addresses && clerkPayload.email_addresses[0]) || '';
+
+    await db.prepare(
+      'INSERT INTO users (email, name, password_hash, clerk_id, xp, level) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(email, name, '', clerkUserId, 100, 'Starter').run();
+
+    user = await db.prepare('SELECT * FROM users WHERE clerk_id = ?').bind(clerkUserId).first();
+
+    // Add XP feed item for joining
+    if (user) {
+      await addFeedItem(db, 'signup', user.id, name, {});
+    }
+  }
+
+  return user;
 }
 
 // --- Require auth (returns user or error response) ---
-export async function requireAuth(request, db) {
-  const user = await getAuthUser(request, db);
+export async function requireAuth(request, db, env) {
+  const user = await getAuthUser(request, db, env);
   if (!user) return { user: null, response: error('Not authenticated', 401) };
   return { user, response: null };
-}
-
-// --- Session cookie helper ---
-export function sessionCookie(token, maxAge = 60 * 60 * 24 * 30) {
-  return `mfgc_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
-}
-
-export function clearSessionCookie() {
-  return 'mfgc_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
 }
 
 // --- Generate unique ID ---

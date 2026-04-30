@@ -5,9 +5,10 @@
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  email TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
   name TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT DEFAULT '',
+  clerk_id TEXT UNIQUE,
   xp INTEGER DEFAULT 0,
   level TEXT DEFAULT 'Starter',
   card_id TEXT,
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_clerk ON users(clerk_id);
 
 -- Cards table
 CREATE TABLE IF NOT EXISTS cards (

@@ -9,6 +9,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_bm90ZWQtc3R1cmdlb24tODQuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
 </head>
 <body>
   <!-- ===== NAVIGATION ===== -->
@@ -65,47 +72,11 @@
     </div>
   </nav>
 
-  <!-- ===== AUTH MODAL ===== -->
+  <!-- ===== AUTH MODAL (Clerk) ===== -->
   <div class="modal-overlay" id="authModal" style="display:none;">
-    <div class="modal modal-auth">
+    <div class="modal modal-auth" style="padding:24px;max-width:460px;">
       <button class="modal-close" onclick="closeAuth()">&times;</button>
-      <h3 class="modal-title" id="authModalTitle">Join the Club</h3>
-
-      <!-- Sign Up Form -->
-      <form id="signupForm" onsubmit="return handleAuth(event, 'signup')">
-        <div class="form-group">
-          <label>Full Name <span class="required">*</span></label>
-          <input type="text" name="fullName" required placeholder="e.g. Tiger Woods" maxlength="50">
-        </div>
-        <div class="form-group">
-          <label>Email <span class="required">*</span></label>
-          <input type="email" name="email" required placeholder="your@email.com">
-        </div>
-        <div class="form-group">
-          <label>Password <span class="required">*</span></label>
-          <input type="password" name="password" required placeholder="Create a password" minlength="6">
-        </div>
-        <div class="form-group">
-          <label>Confirm Password <span class="required">*</span></label>
-          <input type="password" name="confirmPassword" required placeholder="Confirm your password" minlength="6">
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg btn-full">Join the Club</button>
-        <p class="auth-toggle">Already a member? <a href="#" onclick="toggleAuthMode('signin'); return false;">Sign In</a></p>
-      </form>
-
-      <!-- Sign In Form -->
-      <form id="signinForm" style="display:none;" onsubmit="return handleAuth(event, 'signin')">
-        <div class="form-group">
-          <label>Email <span class="required">*</span></label>
-          <input type="email" name="email" required placeholder="your@email.com">
-        </div>
-        <div class="form-group">
-          <label>Password <span class="required">*</span></label>
-          <input type="password" name="password" required placeholder="Your password" minlength="6">
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg btn-full">Sign In</button>
-        <p class="auth-toggle">Not a member yet? <a href="#" onclick="toggleAuthMode('signup'); return false;">Join the Club</a></p>
-      </form>
+      <div id="clerk-auth-mount"></div>
     </div>
   </div>
 

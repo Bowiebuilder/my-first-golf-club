@@ -19,7 +19,18 @@ var API = {
       options.headers['Content-Type'] = 'application/json';
       options.body = JSON.stringify(options.body);
     }
-    options.credentials = 'same-origin'; // send cookies
+    options.credentials = 'same-origin';
+
+    // Attach Clerk session token if available
+    if (_clerkReady && _clerkInstance && _clerkInstance.session) {
+      try {
+        var token = await _clerkInstance.session.getToken();
+        if (token) {
+          options.headers['Authorization'] = 'Bearer ' + token;
+        }
+      } catch (e) { /* no token available */ }
+    }
+
     var res = await fetch('/api' + path, options);
     var data = await res.json();
     if (!res.ok) {
@@ -29,29 +40,8 @@ var API = {
   },
 
   // ============ AUTH ============
-  async signup(name, email, password) {
-    var data = await this._fetch('/auth/signup', {
-      method: 'POST',
-      body: { name, email, password },
-    });
-    this._user = data.user;
-    return data;
-  },
-
-  async signin(email, password) {
-    var data = await this._fetch('/auth/signin', {
-      method: 'POST',
-      body: { email, password },
-    });
-    this._user = data.user;
-    return data;
-  },
-
-  async signout() {
-    await this._fetch('/auth/me', { method: 'DELETE' });
-    this._user = null;
-  },
-
+  // Signup/signin handled by Clerk directly
+  // getMe syncs the Clerk user with our D1 database
   async getMe() {
     try {
       var data = await this._fetch('/auth/me');

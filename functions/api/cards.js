@@ -63,7 +63,7 @@ export async function onRequestGet({ request, env }) {
 
 // POST /api/cards - create or update a card
 export async function onRequestPost({ request, env }) {
-  const { user, response } = await requireAuth(request, env.DB);
+  const { user, response } = await requireAuth(request, env.DB, env);
   if (response) return response;
 
   const body = await parseBody(request);
