@@ -10,6 +10,11 @@ const STORAGE_ROUNDS = 'mfgc_rounds';
 const STORAGE_FEED = 'mfgc_feed';
 const STORAGE_SESSION = 'mfgc_session';
 
+// --- API mode flag ---
+// Starts false, set to true by init.js after all scripts load
+// All modules check this before making API calls, falling back to localStorage
+var USE_API = false;
+
 // --- Global UI State ---
 let currentCardType = 'player';
 let currentFilter = 'all';

@@ -99,6 +99,12 @@ function openAuth(mode) {
   var modal = document.getElementById('authModal');
   var mount = document.getElementById('clerk-auth-mount');
 
+  // Show context message if triggered from card submission
+  var contextMsg = document.getElementById('authContextMsg');
+  if (contextMsg) {
+    contextMsg.style.display = (typeof _pendingCardData !== 'undefined' && _pendingCardData) ? '' : 'none';
+  }
+
   if (_clerkReady && _clerkInstance && mount) {
     // Clear any previous mount
     mount.innerHTML = '';

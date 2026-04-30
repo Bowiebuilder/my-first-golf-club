@@ -5,6 +5,9 @@
    ============================================ */
 
 document.addEventListener('DOMContentLoaded', async function() {
+  // Enable API mode if the API client loaded
+  if (typeof API !== 'undefined') USE_API = true;
+
   // Seed demo data for localStorage fallback on first visit
   seedDemoData();
 

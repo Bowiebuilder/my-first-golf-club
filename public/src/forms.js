@@ -413,6 +413,10 @@ async function editCard() {
     var form = document.getElementById(formId);
     if (!form) return;
 
+    // Update submit button text to "Update"
+    var submitBtn = document.getElementById(card.type === 'player' ? 'playerSubmitBtn' : 'orgSubmitBtn');
+    if (submitBtn) submitBtn.textContent = 'Update Your ' + (card.type === 'player' ? 'Player' : 'Club') + ' Card \u2192';
+
     var fields = ['name', 'yearStarted', 'ageStarted', 'firstCourse', 'location',
                   'handicap', 'introducedBy', 'story', 'orgType', 'signatureCourse',
                   'memberCount', 'founder', 'holes'];
