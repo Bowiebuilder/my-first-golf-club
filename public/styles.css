@@ -796,6 +796,33 @@ a {
   color: var(--maroon);
 }
 
+/* Form validation error states */
+.form-group.has-error input,
+.form-group.has-error textarea,
+.form-group.has-error select {
+  border-color: #c0392b;
+  background: #fdf2f2;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1);
+}
+
+.form-group.has-error label {
+  color: #c0392b;
+}
+
+.field-error {
+  display: block;
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+  animation: fieldErrorIn 0.3s ease;
+}
+
+@keyframes fieldErrorIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .form-group input[type="text"],
 .form-group input[type="number"],
 .form-group input[type="email"],

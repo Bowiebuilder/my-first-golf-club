@@ -37,8 +37,29 @@ async function logRound(event) {
   var conditions = fd.get('conditions') || '';
   var notes = fd.get('notes') || '';
 
-  if (!courseName || !date || isNaN(score)) {
-    showToast('error', 'Missing fields', 'Please fill in course, date, and score');
+  // Field-level validation
+  _clearErrors(form);
+  var errors = 0;
+
+  if (!courseName || courseName.trim().length < 2) {
+    _showFieldError(form, 'courseName', 'Which course did you play?');
+    errors++;
+  }
+  if (!date) {
+    _showFieldError(form, 'date', 'When did you play this round?');
+    errors++;
+  }
+  if (isNaN(score)) {
+    _showFieldError(form, 'score', 'What was your total score?');
+    errors++;
+  } else if (score < 40 || score > 200) {
+    _showFieldError(form, 'score', 'Score should be between 40 and 200');
+    errors++;
+  }
+
+  if (errors > 0) {
+    _scrollToFirstError(form);
+    showToast('error', errors + ' field' + (errors > 1 ? 's' : '') + ' need attention', 'Please check the highlighted fields');
     return false;
   }
 

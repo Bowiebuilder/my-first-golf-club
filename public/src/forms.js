@@ -101,23 +101,94 @@ function handlePhotoUpload(input, type) {
 var _pendingCardData = null;
 var _pendingCardType = null;
 
+// --- Field-level validation helpers ---
+function _clearErrors(form) {
+  form.querySelectorAll('.form-group.has-error').forEach(function(g) {
+    g.classList.remove('has-error');
+  });
+  form.querySelectorAll('.field-error').forEach(function(e) { e.remove(); });
+}
+
+function _showFieldError(form, fieldName, message) {
+  var input = form.querySelector('[name="' + fieldName + '"]');
+  if (!input) return;
+  var group = input.closest('.form-group');
+  if (!group) return;
+  group.classList.add('has-error');
+  var err = document.createElement('span');
+  err.className = 'field-error';
+  err.textContent = message;
+  // Add after the input (or after char-count if it exists)
+  var charCount = group.querySelector('.char-count');
+  if (charCount) { charCount.parentNode.insertBefore(err, charCount.nextSibling); }
+  else { group.appendChild(err); }
+}
+
+function _scrollToFirstError(form) {
+  var firstError = form.querySelector('.form-group.has-error');
+  if (firstError) {
+    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var input = firstError.querySelector('input, textarea, select');
+    if (input) input.focus();
+  }
+}
+
+function _validateCardForm(form, data, type) {
+  _clearErrors(form);
+  var errors = 0;
+
+  if (!data.name || data.name.trim().length < 2) {
+    _showFieldError(form, 'name', type === 'player' ? 'Please enter your full name' : 'Please enter the organization name');
+    errors++;
+  }
+
+  if (!data.yearStarted) {
+    _showFieldError(form, 'yearStarted', type === 'player' ? 'When did you start playing?' : 'When was the organization established?');
+    errors++;
+  } else {
+    var year = parseInt(data.yearStarted);
+    if (year < 1400 || year > new Date().getFullYear()) {
+      _showFieldError(form, 'yearStarted', 'Please enter a valid year');
+      errors++;
+    }
+  }
+
+  if (!data.location || data.location.trim().length < 2) {
+    _showFieldError(form, 'location', 'Where are you based? e.g. Cape Town, South Africa');
+    errors++;
+  }
+
+  if (type === 'player' && (!data.firstCourse || data.firstCourse.trim().length < 2)) {
+    _showFieldError(form, 'firstCourse', 'What was the first course you played?');
+    errors++;
+  }
+
+  if (type === 'org' && !data.orgType) {
+    _showFieldError(form, 'orgType', 'Please select an organization type');
+    errors++;
+  }
+
+  if (!data.story || data.story.trim().length < 10) {
+    _showFieldError(form, 'story', data.story ? 'Tell us a bit more - at least a couple of sentences' : (type === 'player' ? 'Tell us about how your golf journey began' : 'Tell us the founding story'));
+    errors++;
+  }
+
+  if (errors > 0) {
+    _scrollToFirstError(form);
+    showToast('error', errors + ' field' + (errors > 1 ? 's' : '') + ' need attention', 'Please check the highlighted fields');
+  }
+
+  return errors === 0;
+}
+
 async function submitCard(event, type) {
   event.preventDefault();
   var data = getFormData(type);
 
-  // Validate
-  if (!data.name || !data.yearStarted || !data.story) {
-    showToast('error', 'Missing fields', 'Please fill in all required fields');
-    return false;
-  }
-  if (!data.location) {
-    showToast('error', 'Missing location', 'Please fill in your location');
-    return false;
-  }
-  if (type === 'player' && !data.firstCourse) {
-    showToast('error', 'Missing course', 'Please fill in your first course');
-    return false;
-  }
+  // Validate with field-level errors
+  var formId = type === 'player' ? 'playerForm' : 'orgForm';
+  var form = document.getElementById(formId);
+  if (!_validateCardForm(form, data, type)) return false;
 
   // If not logged in, stash the data and prompt signup
   if (!getCurrentUser()) {
@@ -271,12 +342,21 @@ async function processPendingCard() {
   await _saveCard(data, type);
 }
 
+function _clearFieldError(el) {
+  var group = el.closest('.form-group');
+  if (group && group.classList.contains('has-error')) {
+    group.classList.remove('has-error');
+    var err = group.querySelector('.field-error');
+    if (err) err.remove();
+  }
+}
+
 function bindFormEvents() {
   var playerForm = document.getElementById('playerForm');
   if (playerForm) {
     playerForm.querySelectorAll('input, textarea, select').forEach(function(el) {
-      el.addEventListener('input', renderPreviewCard);
-      el.addEventListener('change', renderPreviewCard);
+      el.addEventListener('input', function() { renderPreviewCard(); _clearFieldError(el); });
+      el.addEventListener('change', function() { renderPreviewCard(); _clearFieldError(el); });
     });
     var ps = playerForm.querySelector('textarea[name="story"]');
     if (ps) {
@@ -290,8 +370,8 @@ function bindFormEvents() {
   var orgForm = document.getElementById('orgForm');
   if (orgForm) {
     orgForm.querySelectorAll('input, textarea, select').forEach(function(el) {
-      el.addEventListener('input', renderPreviewCard);
-      el.addEventListener('change', renderPreviewCard);
+      el.addEventListener('input', function() { renderPreviewCard(); _clearFieldError(el); });
+      el.addEventListener('change', function() { renderPreviewCard(); _clearFieldError(el); });
     });
     var os = orgForm.querySelector('textarea[name="story"]');
     if (os) {
