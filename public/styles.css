@@ -84,9 +84,9 @@ a {
 }
 
 .nav-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 24px 0 5%;
   height: 120px;
   display: flex;
   align-items: center;
@@ -4150,8 +4150,8 @@ a {
 
   /* ---- NAV ---- */
   .nav-inner {
-    max-width: 1400px;
-    padding: 0 48px;
+    max-width: 100%;
+    padding: 0 48px 0 8%;
     height: 140px;
   }
 
