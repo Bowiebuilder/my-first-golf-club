@@ -87,7 +87,7 @@ a {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
-  height: 64px;
+  height: 76px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -100,7 +100,7 @@ a {
 }
 
 .nav-logo-img {
-  height: 40px;
+  height: 56px;
   width: auto;
   object-fit: contain;
 }
@@ -383,7 +383,7 @@ a {
    ============================================ */
 .section {
   min-height: 100vh;
-  padding-top: 64px;
+  padding-top: 76px;
 }
 
 .section-title {
@@ -2997,7 +2997,7 @@ a {
 }
 
 .footer-logo-img {
-  height: 36px;
+  height: 48px;
   width: auto;
   object-fit: contain;
   filter: brightness(0) invert(1);
@@ -4152,11 +4152,11 @@ a {
   .nav-inner {
     max-width: 1400px;
     padding: 0 48px;
-    height: 72px;
+    height: 84px;
   }
 
   .nav-logo-img {
-    height: 48px;
+    height: 64px;
   }
 
   .nav-link {
