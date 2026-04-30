@@ -102,19 +102,38 @@ function launchConfetti() {
   }, 6000);
 }
 
-// --- Share to X / Twitter ---
-function shareToX() {
-  if (!_celebrationCardData) return;
+// --- Build share text ---
+function _getShareText() {
+  if (!_celebrationCardData) return '';
   var card = _celebrationCardData;
   var isPlayer = card.type === 'player';
+  return isPlayer
+    ? 'I just created my Player Card on My First Golf Club! \u26F3 My golf journey started in ' + (card.yearStarted || '?') + ' at ' + (card.firstCourse || 'the course') + '. Create yours:'
+    : (card.name || 'Our organization') + ' just joined My First Golf Club! \u26F3 Est. ' + (card.yearStarted || '?') + '. Create your card:';
+}
 
-  var text = isPlayer
-    ? 'I just created my Player Card on My First Golf Club! \u26F3\n\nMy golf journey started in ' + (card.yearStarted || '?') + ' at ' + (card.firstCourse || 'the course') + '.\n\nCreate yours:'
-    : (card.name || 'Our organization') + ' just joined My First Golf Club! \u26F3\n\nEst. ' + (card.yearStarted || '?') + '.\n\nCreate your card:';
+var SHARE_URL = 'https://myfirstgolf.club';
 
-  var url = 'https://myfirstgolf.club';
-  var shareUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
-  window.open(shareUrl, '_blank', 'width=600,height=400');
+// --- Share to X / Twitter ---
+function shareToX() {
+  var text = _getShareText();
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(SHARE_URL), '_blank', 'width=600,height=500');
+}
+
+// --- Share to Facebook ---
+function shareToFacebook() {
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SHARE_URL) + '&quote=' + encodeURIComponent(_getShareText()), '_blank', 'width=600,height=500');
+}
+
+// --- Share to LinkedIn ---
+function shareToLinkedIn() {
+  window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(SHARE_URL), '_blank', 'width=600,height=500');
+}
+
+// --- Share to WhatsApp ---
+function shareToWhatsApp() {
+  var text = _getShareText() + ' ' + SHARE_URL;
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
 }
 
 // --- Copy link ---

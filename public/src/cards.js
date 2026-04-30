@@ -71,10 +71,7 @@ function renderCardHTML(card) {
       '<div class="golf-card-face card-front">' +
         '<div class="card-top-bar">' +
           '<span class="card-type-badge">' + (isPlayer ? 'PLAYER CARD' : 'CLUB CARD') + '</span>' +
-          '<div style="display:flex;gap:6px;align-items:center;">' +
-            top100BadgeHTML +
-            '<span class="card-era-badge card-era-' + era + '">' + eraLabel + '</span>' +
-          '</div>' +
+          (hasTop100 ? '<span class="top100-verified-badge" style="font-size:8px;padding:2px 6px;">TOP 100</span>' : '') +
         '</div>' +
         '<div class="card-photo-area">' + photoHTML + '</div>' +
         '<div class="card-name-area">' +

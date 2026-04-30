@@ -4024,6 +4024,13 @@ a {
 }
 
 .share-btn-x:hover { border-color: #fff; }
+.share-btn-fb { }
+.share-btn-fb:hover { border-color: #1877F2; color: #1877F2; }
+.share-btn-fb span:first-child { font-weight: 900; font-size: 16px; }
+.share-btn-li { }
+.share-btn-li:hover { border-color: #0A66C2; color: #0A66C2; }
+.share-btn-li span:first-child { font-weight: 900; font-size: 14px; }
+.share-btn-wa:hover { border-color: #25D366; color: #25D366; }
 .share-btn-copy:hover { border-color: var(--gold); color: var(--gold); }
 .share-btn-download:hover { border-color: var(--green-light); color: var(--green-light); }
 
@@ -4040,15 +4047,27 @@ a {
   min-width: 260px;
 }
 
-.celebration-actions .btn-ghost-light {
-  color: rgba(255,255,255,0.6);
-  border-color: rgba(255,255,255,0.15);
+.celebration-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 14px 32px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 260px;
 }
 
-.celebration-actions .btn-ghost-light:hover {
-  color: #fff;
-  border-color: rgba(255,255,255,0.4);
-  background: rgba(255,255,255,0.08);
+.celebration-btn-secondary:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.6);
 }
 
 /* ============================================
