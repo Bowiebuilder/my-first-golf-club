@@ -10,7 +10,6 @@ var _clerkInstance = null;
 
 // Wait for Clerk to load and initialize
 async function initClerk() {
-  // Clerk SDK loads async via script tag, sets window.Clerk
   var maxWait = 10000;
   var waited = 0;
   while (!window.Clerk && waited < maxWait) {
@@ -19,39 +18,34 @@ async function initClerk() {
   }
 
   if (!window.Clerk) {
-    console.warn('Clerk SDK did not load - falling back to localStorage auth');
+    console.warn('Clerk SDK did not load');
     return;
   }
 
   try {
-    // Clerk auto-initializes from the script tag's data-clerk-publishable-key
-    // Wait for it to be ready
     await window.Clerk.load();
     _clerkInstance = window.Clerk;
     _clerkReady = true;
 
     // Listen for auth state changes
-    _clerkInstance.addListener(function(event) {
+    _clerkInstance.addListener(function() {
       updateAuthUI();
       // If user just signed in and there's a pending card, process it
       if (_clerkInstance.user && typeof _pendingCardData !== 'undefined' && _pendingCardData) {
-        closeAuth();
         showToast('success', 'Welcome!', 'Saving your card now...');
-        setTimeout(function() { processPendingCard(); }, 300);
-      } else if (_clerkInstance.user) {
-        closeAuth();
+        setTimeout(function() { processPendingCard(); }, 500);
       }
     });
 
     updateAuthUI();
   } catch (e) {
-    console.warn('Clerk initialization failed:', e);
+    console.warn('Clerk init failed:', e);
   }
 }
 
-// Get the current user - prefers API._user (D1 data), then Clerk, then localStorage
+// Get the current user
 function getCurrentUser() {
-  // If we have synced D1 data via API, use that (has XP, badges, card_id etc)
+  // Prefer API._user (has D1 data: XP, badges, card_id)
   if (USE_API && API._user) {
     var u = API._user;
     return {
@@ -87,70 +81,53 @@ function getCurrentUser() {
 }
 
 function saveCurrentUser(user) {
-  // Update localStorage cache
   var users = getUsers();
   var idx = users.findIndex(function(u) { return u.email === user.email; });
   if (idx >= 0) { users[idx] = user; saveUsers(users); }
   if (USE_API) API._user = user;
 }
 
-// Open auth modal - Clerk handles the UI
+// Open Clerk's built-in auth modal
 function openAuth(mode) {
-  var modal = document.getElementById('authModal');
-  var mount = document.getElementById('clerk-auth-mount');
-
-  // Show context message if triggered from card submission
-  var contextMsg = document.getElementById('authContextMsg');
-  if (contextMsg) {
-    contextMsg.style.display = (typeof _pendingCardData !== 'undefined' && _pendingCardData) ? '' : 'none';
-  }
-
-  if (_clerkReady && _clerkInstance && mount) {
-    // Clear any previous mount
-    mount.innerHTML = '';
+  if (_clerkReady && _clerkInstance) {
+    // Show context toast if triggered from card submission
+    if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
+      showToast('success', 'Almost there!', 'Sign in to save your card to the community');
+    }
 
     if (mode === 'signin') {
-      _clerkInstance.mountSignIn(mount, {
+      _clerkInstance.openSignIn({
         appearance: {
           variables: {
             colorPrimary: '#1a5e3a',
-            colorText: '#2c2c2c',
             fontFamily: 'Inter, sans-serif',
             borderRadius: '12px'
           }
         }
       });
     } else {
-      _clerkInstance.mountSignUp(mount, {
+      _clerkInstance.openSignUp({
         appearance: {
           variables: {
             colorPrimary: '#1a5e3a',
-            colorText: '#2c2c2c',
             fontFamily: 'Inter, sans-serif',
             borderRadius: '12px'
           }
         }
       });
     }
-
-    modal.style.display = 'flex';
   } else {
-    // Clerk not ready - show a loading state or fallback
     showToast('error', 'Loading...', 'Authentication is loading, please try again in a moment');
   }
 }
 
 function closeAuth() {
-  var modal = document.getElementById('authModal');
-  var mount = document.getElementById('clerk-auth-mount');
-
-  if (_clerkReady && _clerkInstance && mount) {
-    try {
-      _clerkInstance.unmountSignIn(mount);
-      _clerkInstance.unmountSignUp(mount);
-    } catch (e) { /* may not be mounted */ }
+  if (_clerkReady && _clerkInstance) {
+    try { _clerkInstance.closeSignIn(); } catch (e) {}
+    try { _clerkInstance.closeSignUp(); } catch (e) {}
   }
-
+  // Also hide our custom modal overlay if it was shown
+  var modal = document.getElementById('authModal');
   if (modal) modal.style.display = 'none';
 
   // Clear pending card if user dismisses
@@ -186,7 +163,6 @@ function updateAuthUI() {
     if (mobileIn) mobileIn.style.display = '';
     var avatar = document.getElementById('navAvatar');
     if (avatar) {
-      // Use Clerk profile image if available
       if (_clerkReady && _clerkInstance && _clerkInstance.user && _clerkInstance.user.imageUrl) {
         avatar.innerHTML = '<img src="' + _clerkInstance.user.imageUrl + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
       } else {
@@ -211,6 +187,6 @@ function closeUserDropdown() {
   if (dd) dd.classList.remove('open');
 }
 
-// Legacy functions kept as no-ops for compatibility
+// Legacy functions kept for HTML onclick compatibility
 function handleAuth(event, mode) { if (event) event.preventDefault(); openAuth(mode); return false; }
 function toggleAuthMode(mode) { openAuth(mode); }
