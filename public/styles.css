@@ -3802,3 +3802,242 @@ a {
   font-size: 18px;
   flex-shrink: 0;
 }
+
+/* ============================================
+   DESKTOP ENHANCEMENTS (min-width: 1024px)
+   Better use of horizontal space on wide screens
+   ============================================ */
+@media (min-width: 1024px) {
+
+  /* --- Hero: larger type, wider content, show floating cards --- */
+  .hero-content {
+    max-width: 800px;
+    padding: 100px 40px;
+  }
+
+  .hero-title {
+    font-size: 68px;
+  }
+
+  .hero-subtitle {
+    font-size: 20px;
+    max-width: 620px;
+  }
+
+  .hero-eyebrow {
+    font-size: 18px;
+  }
+
+  .hero-stat-number {
+    font-size: 42px;
+  }
+
+  .hero-card-preview {
+    display: block;
+  }
+
+  .floating-card-1 {
+    top: 18%;
+    right: 6%;
+  }
+
+  .floating-card-2 {
+    bottom: 20%;
+    left: 5%;
+  }
+
+  .mini-card {
+    width: 180px;
+    padding: 24px 20px;
+  }
+
+  /* --- Nav: more breathing room --- */
+  .nav-inner {
+    max-width: 1300px;
+    padding: 0 40px;
+    height: 72px;
+  }
+
+  .nav-logo-img {
+    height: 46px;
+  }
+
+  .nav-link {
+    font-size: 15px;
+    padding: 10px 20px;
+  }
+
+  /* --- Community: bigger cards in a proper grid --- */
+  .community-container {
+    max-width: 1300px;
+    padding: 60px 40px 80px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 32px;
+    justify-items: center;
+  }
+
+  .card-grid .golf-card {
+    width: 290px;
+    height: 418px;
+  }
+
+  .card-grid .card-player-name {
+    font-size: 20px;
+  }
+
+  .card-grid .card-initials {
+    width: 90px;
+    height: 90px;
+    font-size: 32px;
+  }
+
+  .card-grid .card-photo {
+    width: 90px;
+    height: 90px;
+  }
+
+  /* --- Activity Feed: horizontal layout --- */
+  .activity-feed {
+    margin-bottom: 32px;
+    background: #fff;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 24px;
+  }
+
+  .feed-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+  }
+
+  /* --- Submit: wider form, larger preview --- */
+  .submit-container {
+    max-width: 1200px;
+    padding: 60px 40px 80px;
+  }
+
+  .submit-layout {
+    grid-template-columns: 1fr 420px;
+    gap: 60px;
+  }
+
+  .card-form {
+    padding: 40px;
+  }
+
+  /* --- Clubhouse: wider container --- */
+  .clubhouse-container {
+    max-width: 1100px;
+    padding: 60px 40px 80px;
+  }
+
+  .overview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .stat-card {
+    padding: 28px;
+  }
+
+  .stat-card-value {
+    font-size: 36px;
+  }
+
+  /* --- Top 100: wider grid, bigger course cards --- */
+  .top100-container {
+    max-width: 1300px;
+    padding: 60px 40px 80px;
+  }
+
+  .top100-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 28px;
+  }
+
+  .course-card-body {
+    padding: 24px;
+  }
+
+  .course-card-name {
+    font-size: 22px;
+  }
+
+  /* --- About: wider grid --- */
+  .about-container {
+    max-width: 1100px;
+    padding: 60px 40px 80px;
+  }
+
+  /* --- Section titles scale up --- */
+  .section-title {
+    font-size: 44px;
+  }
+
+  .section-subtitle {
+    font-size: 18px;
+    max-width: 600px;
+  }
+
+  /* --- Modals: bigger on desktop --- */
+  .modal {
+    max-width: 520px;
+    padding: 48px;
+  }
+
+  .modal-detail {
+    max-width: 780px;
+    padding: 56px;
+  }
+}
+
+/* ============================================
+   LARGE DESKTOP (min-width: 1440px)
+   For very wide monitors
+   ============================================ */
+@media (min-width: 1440px) {
+
+  .hero-content {
+    max-width: 900px;
+  }
+
+  .hero-title {
+    font-size: 76px;
+  }
+
+  .community-container,
+  .top100-container {
+    max-width: 1400px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 36px;
+  }
+
+  .card-grid .golf-card {
+    width: 300px;
+    height: 432px;
+  }
+
+  .top100-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+
+  .submit-layout {
+    grid-template-columns: 1fr 460px;
+  }
+
+  .overview-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .feed-items {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
