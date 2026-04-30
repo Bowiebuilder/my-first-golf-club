@@ -10,6 +10,7 @@ function renderCardHTML(card) {
   var serial = generateSerial(card);
   var initials = getInitials(card.name);
   var theme = card.cardColor || 'green';
+  var border = card.borderStyle || 'gold';
   var isPlayer = card.type === 'player';
   var yearLabel = isPlayer
     ? 'Since ' + (card.yearStarted || '----')
@@ -67,7 +68,7 @@ function renderCardHTML(card) {
     : '';
 
   return '' +
-    '<div class="golf-card card-theme-' + theme + '" onclick="this.classList.toggle(\'flipped\')">' +
+    '<div class="golf-card card-theme-' + theme + ' card-border-' + border + '" onclick="this.classList.toggle(\'flipped\')">' +
       '<div class="golf-card-face card-front">' +
         '<div class="card-top-bar">' +
           '<span class="card-type-badge">' + (isPlayer ? 'PLAYER CARD' : 'CLUB CARD') + '</span>' +
