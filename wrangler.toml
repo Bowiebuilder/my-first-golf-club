@@ -1,0 +1,12 @@
+name = "my-first-golf-club"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mfgc-db"
+database_id = "3cadf519-cdb7-42d9-a4db-4df416c4fded"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "mfgc-photos"

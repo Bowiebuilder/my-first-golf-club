@@ -1,8 +1,11 @@
 /* ============================================
    AUTH SYSTEM - src/auth.js
-   Signup, signin, session, UI updates
-   Depends on: storage.js, toasts.js, xp.js, navigation.js
+   Uses API client with localStorage fallback
+   Depends on: storage.js, api.js, toasts.js, xp.js, navigation.js
    ============================================ */
+
+// Whether to use API (true when deployed) or localStorage (local dev fallback)
+var USE_API = (typeof API !== 'undefined');
 
 function simpleHash(str) {
   var hash = 0;
@@ -15,6 +18,9 @@ function simpleHash(str) {
 }
 
 function getCurrentUser() {
+  // Check API cache first
+  if (USE_API && API._user) return API._user;
+  // Fallback to localStorage
   var email = localStorage.getItem(STORAGE_SESSION);
   if (!email) return null;
   var users = getUsers();
@@ -22,15 +28,15 @@ function getCurrentUser() {
 }
 
 function saveCurrentUser(user) {
+  // Update localStorage cache
   var users = getUsers();
   var idx = users.findIndex(function(u) { return u.email === user.email; });
-  if (idx >= 0) {
-    users[idx] = user;
-    saveUsers(users);
-  }
+  if (idx >= 0) { users[idx] = user; saveUsers(users); }
+  // Update API cache
+  if (USE_API) API._user = user;
 }
 
-function handleAuth(event, mode) {
+async function handleAuth(event, mode) {
   event.preventDefault();
   var form = mode === 'signup'
     ? document.getElementById('signupForm')
@@ -48,31 +54,45 @@ function handleAuth(event, mode) {
       return false;
     }
 
-    var users = getUsers();
-    if (users.find(function(u) { return u.email === email; })) {
-      showToast('error', 'Email taken', 'An account with this email already exists');
+    try {
+      if (USE_API) {
+        var data = await API.signup(name, email, pw);
+        // Also cache in localStorage for offline compatibility
+        var localUser = Object.assign({}, data.user, {
+          passwordHash: simpleHash(pw),
+          playedCourses: data.user.played_courses || [],
+          unlockedBadges: data.user.unlocked_badges || [],
+          cardId: data.user.card_id
+        });
+        var users = getUsers();
+        users.push(localUser);
+        saveUsers(users);
+        localStorage.setItem(STORAGE_SESSION, email);
+      } else {
+        // Pure localStorage mode
+        var users = getUsers();
+        if (users.find(function(u) { return u.email === email; })) {
+          showToast('error', 'Email taken', 'An account with this email already exists');
+          return false;
+        }
+        var localUser = {
+          email: email, name: name, passwordHash: simpleHash(pw),
+          createdAt: new Date().toISOString(), xp: 0, level: 'Starter',
+          cardId: null, playedCourses: [], unlockedBadges: []
+        };
+        users.push(localUser);
+        saveUsers(users);
+        localStorage.setItem(STORAGE_SESSION, email);
+        awardXP(100, 'Joining the club');
+      }
+    } catch (err) {
+      showToast('error', 'Signup failed', err.message || 'Please try again');
       return false;
     }
 
-    var user = {
-      email: email,
-      name: name,
-      passwordHash: simpleHash(pw),
-      createdAt: new Date().toISOString(),
-      xp: 0,
-      level: 'Starter',
-      cardId: null,
-      playedCourses: [],
-      unlockedBadges: []
-    };
-    users.push(user);
-    saveUsers(users);
-    localStorage.setItem(STORAGE_SESSION, email);
     closeAuth();
     updateAuthUI();
-    awardXP(100, 'Joining the club');
 
-    // If there's a pending card, process it now (don't navigate away)
     if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
       showToast('success', 'Welcome to the club!', 'Saving your card now...');
       setTimeout(function() { processPendingCard(); }, 300);
@@ -80,27 +100,40 @@ function handleAuth(event, mode) {
       showSection('submit');
       showToast('success', 'Welcome to the club!', 'Now create your playing card');
     }
+
   } else {
+    // Sign in
     var email2 = fd.get('email');
     var pw3 = fd.get('password');
-    var users2 = getUsers();
-    var found = users2.find(function(u) { return u.email === email2; });
 
-    if (!found || found.passwordHash !== simpleHash(pw3)) {
-      showToast('error', 'Invalid credentials', 'Check your email and password');
+    try {
+      if (USE_API) {
+        var data = await API.signin(email2, pw3);
+        // Cache locally
+        localStorage.setItem(STORAGE_SESSION, email2);
+      } else {
+        var users2 = getUsers();
+        var found = users2.find(function(u) { return u.email === email2; });
+        if (!found || found.passwordHash !== simpleHash(pw3)) {
+          showToast('error', 'Invalid credentials', 'Check your email and password');
+          return false;
+        }
+        localStorage.setItem(STORAGE_SESSION, email2);
+      }
+    } catch (err) {
+      showToast('error', 'Sign in failed', err.message || 'Check your credentials');
       return false;
     }
 
-    localStorage.setItem(STORAGE_SESSION, email2);
     closeAuth();
     updateAuthUI();
 
-    // If there's a pending card, process it now
+    var user = getCurrentUser();
     if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
       showToast('success', 'Welcome back!', 'Saving your card now...');
       setTimeout(function() { processPendingCard(); }, 300);
     } else {
-      showToast('success', 'Welcome back!', 'Good to see you, ' + found.name);
+      showToast('success', 'Welcome back!', 'Good to see you, ' + (user ? user.name : ''));
       showSection('clubhouse');
     }
   }
@@ -109,8 +142,12 @@ function handleAuth(event, mode) {
   return false;
 }
 
-function handleSignOut() {
+async function handleSignOut() {
+  try {
+    if (USE_API) await API.signout();
+  } catch (e) { /* ignore */ }
   localStorage.removeItem(STORAGE_SESSION);
+  if (USE_API) API._user = null;
   updateAuthUI();
   closeUserDropdown();
   showSection('hero');
@@ -120,8 +157,6 @@ function handleSignOut() {
 function openAuth(mode) {
   document.getElementById('authModal').style.display = 'flex';
   toggleAuthMode(mode);
-
-  // If triggered from card submission, show contextual title
   if (typeof _pendingCardData !== 'undefined' && _pendingCardData) {
     var title = document.getElementById('authModalTitle');
     if (title) title.textContent = 'Join to Save Your Card';
@@ -130,7 +165,6 @@ function openAuth(mode) {
 
 function closeAuth() {
   document.getElementById('authModal').style.display = 'none';
-  // Clear pending card if user dismisses the auth modal
   if (typeof _pendingCardData !== 'undefined') {
     _pendingCardData = null;
     _pendingCardType = null;

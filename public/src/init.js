@@ -4,9 +4,18 @@
    Depends on: ALL other modules
    ============================================ */
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Seed demo data on first visit
+document.addEventListener('DOMContentLoaded', async function() {
+  // Seed demo data for localStorage fallback on first visit
   seedDemoData();
+
+  // Try to restore session from API (cookie-based)
+  if (typeof API !== 'undefined') {
+    try {
+      await API.getMe();
+    } catch (e) {
+      // Not logged in or API unavailable - localStorage will handle it
+    }
+  }
 
   // Set up auth UI
   updateAuthUI();
