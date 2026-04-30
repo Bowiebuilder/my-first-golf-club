@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My First Golf Club - Where Every Golf Story Begins</title>
   <link rel="icon" type="image/png" href="logo.png?v=3">
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=13">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -185,80 +185,209 @@
       <div class="submit-layout">
         <!-- FORM SIDE -->
         <div class="form-side">
-          <!-- Player Form -->
-          <form id="playerForm" class="card-form" onsubmit="return submitCard(event, 'player')">
-            <div class="form-group">
-              <label>Full Name <span class="required">*</span></label>
-              <input type="text" name="name" required placeholder="e.g. Tiger Woods" maxlength="50">
+          <!-- Player Form (Wizard) -->
+          <form id="playerForm" class="card-form card-form-wizard" onsubmit="return submitCard(event, 'player')">
+
+            <!-- Progress bar -->
+            <div class="wizard-progress" id="wizardProgress">
+              <div class="wizard-progress-bar">
+                <div class="wizard-progress-fill" id="wizardProgressFill" style="width: 14.28%;"></div>
+              </div>
+              <div class="wizard-progress-label">
+                Step <span id="wizardStepNum">1</span> of 7
+              </div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Year Started <span class="required">*</span></label>
-                <input type="number" name="yearStarted" required placeholder="e.g. 1995" min="1800" max="2026">
+
+            <!-- ============ STEP 1: DESIGN ============ -->
+            <div class="wizard-step active" data-step="1">
+              <div class="wizard-step-header">
+                <span class="wizard-step-emoji">&#127912;</span>
+                <h3 class="wizard-step-title">Design your card</h3>
+                <p class="wizard-step-subtitle">Pick a look. You can change it any time.</p>
               </div>
               <div class="form-group">
-                <label>Age When Started</label>
+                <label>Card Color</label>
+                <div class="color-selector">
+                  <label class="color-option"><input type="radio" name="cardColor" value="green" checked><span class="color-swatch color-green"></span></label>
+                  <label class="color-option"><input type="radio" name="cardColor" value="navy"><span class="color-swatch color-navy"></span></label>
+                  <label class="color-option"><input type="radio" name="cardColor" value="maroon"><span class="color-swatch color-maroon"></span></label>
+                  <label class="color-option"><input type="radio" name="cardColor" value="black"><span class="color-swatch color-black"></span></label>
+                  <label class="color-option"><input type="radio" name="cardColor" value="royal"><span class="color-swatch color-royal"></span></label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Border Style</label>
+                <div class="border-selector">
+                  <label class="border-option"><input type="radio" name="borderStyle" value="gold" checked><span class="border-swatch border-gold"><span>Gold</span></span></label>
+                  <label class="border-option"><input type="radio" name="borderStyle" value="silver"><span class="border-swatch border-silver"><span>Silver</span></span></label>
+                  <label class="border-option"><input type="radio" name="borderStyle" value="bronze"><span class="border-swatch border-bronze"><span>Bronze</span></span></label>
+                </div>
+              </div>
+            </div>
+
+            <!-- ============ STEP 2: AGE STARTED ============ -->
+            <div class="wizard-step" data-step="2">
+              <div class="wizard-step-header">
+                <span class="wizard-step-emoji">&#127919;</span>
+                <h3 class="wizard-step-title">When did you start?</h3>
+                <p class="wizard-step-subtitle">The age and year you first picked up a club.</p>
+              </div>
+              <div class="form-group">
+                <label>Age you started</label>
                 <input type="number" name="ageStarted" placeholder="e.g. 12" min="1" max="120">
               </div>
-            </div>
-            <div class="form-group">
-              <label>First Course Played <span class="required">*</span></label>
-              <input type="text" name="firstCourse" required placeholder="e.g. St Andrews Old Course" maxlength="60">
-            </div>
-            <div class="form-row">
               <div class="form-group">
-                <label>Location / Country <span class="required">*</span></label>
-                <input type="text" name="location" required placeholder="e.g. Cape Town, South Africa" maxlength="50">
+                <label>Year started <span class="required">*</span></label>
+                <input type="number" name="yearStarted" placeholder="e.g. 1995" min="1800" max="2026">
+              </div>
+            </div>
+
+            <!-- ============ STEP 3: NATIONALITY ============ -->
+            <div class="wizard-step" data-step="3">
+              <div class="wizard-step-header">
+                <span class="wizard-step-emoji">&#127759;</span>
+                <h3 class="wizard-step-title">Where are you from?</h3>
+                <p class="wizard-step-subtitle">Your flag will appear on your card.</p>
               </div>
               <div class="form-group">
-                <label>Current Handicap <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(your skill level)</span></label>
-                <input type="text" name="handicap" placeholder="e.g. 18, Beginner, or N/A" maxlength="20">
+                <label>Nationality <span class="required">*</span></label>
+                <select name="location" id="nationalitySelect" required>
+                  <option value="">Select your country...</option>
+                  <!-- Populated by JS -->
+                </select>
               </div>
             </div>
-            <div class="form-group">
-              <label>Who Introduced You to Golf?</label>
-              <input type="text" name="introducedBy" placeholder="e.g. My grandfather, a school coach..." maxlength="60">
-            </div>
-            <div class="form-group">
-              <label>Favorite Club <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(type of golf club you prefer)</span></label>
-              <div class="club-selector">
-                <label class="club-option"><input type="radio" name="favClub" value="Driver"><span>Driver</span></label>
-                <label class="club-option"><input type="radio" name="favClub" value="Iron"><span>Iron</span></label>
-                <label class="club-option"><input type="radio" name="favClub" value="Wedge"><span>Wedge</span></label>
-                <label class="club-option"><input type="radio" name="favClub" value="Putter"><span>Putter</span></label>
-                <label class="club-option"><input type="radio" name="favClub" value="Hybrid"><span>Hybrid</span></label>
-                <label class="club-option"><input type="radio" name="favClub" value="Wood"><span>Wood</span></label>
+
+            <!-- ============ STEP 4: FIRST COURSE ============ -->
+            <div class="wizard-step" data-step="4">
+              <div class="wizard-step-header">
+                <span class="wizard-step-emoji">&#9971;</span>
+                <h3 class="wizard-step-title">Where did you first play?</h3>
+                <p class="wizard-step-subtitle">Optional, but helps us put you on the global map.</p>
+              </div>
+              <div class="form-group">
+                <label>Country of first round</label>
+                <select name="firstCourseCountry" id="firstCourseCountrySelect">
+                  <option value="">Same as nationality</option>
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label>First course played <span class="required">*</span></label>
+                <input type="text" name="firstCourse" placeholder="Start typing your course..." maxlength="80" autocomplete="off">
+                <input type="hidden" name="firstCourseLat">
+                <input type="hidden" name="firstCourseLon">
+                <p class="form-hint">Course autocomplete coming next &mdash; for now just type the name.</p>
               </div>
             </div>
-            <div class="form-group">
-              <label>Your Golf Origin Story <span class="required">*</span></label>
-              <textarea name="story" required placeholder="Tell us about the moment you first picked up a golf club. What do you remember? What hooked you?" maxlength="280" rows="3"></textarea>
-              <span class="char-count"><span id="playerCharCount">0</span>/280</span>
+
+            <!-- ============ STEP 5: ABOUT YOU ============ -->
+            <div class="wizard-step" data-step="5">
+              <div class="wizard-step-header">
+                <span class="wizard-step-emoji">&#128100;</span>
+                <h3 class="wizard-step-title">About you</h3>
+                <p class="wizard-step-subtitle">Just a few details for your card.</p>
+              </div>
+              <div class="form-group">
+                <label>Your name <span class="required">*</span></label>
+                <input type="text" name="name" placeholder="e.g. Tiger Woods" maxlength="50">
+              </div>
+              <div class="form-group">
+                <label>Current handicap</label>
+                <select name="handicap" id="handicapSelect">
+                  <option value="">Select...</option>
+                  <optgroup label="New to golf">
+                    <option value="Just Starting">Just Starting</option>
+                    <option value="Beginner">Beginner</option>
+                  </optgroup>
+                  <optgroup label="Handicap">
+                    <option value="36">36</option>
+                    <option value="30">30</option>
+                    <option value="25">25</option>
+                    <option value="20">20</option>
+                    <option value="18">18</option>
+                    <option value="15">15</option>
+                    <option value="12">12</option>
+                    <option value="10">10</option>
+                    <option value="8">8</option>
+                    <option value="6">6</option>
+                    <option value="5">5</option>
+                    <option value="4">4</option>
+                    <option value="3">3</option>
+                    <option value="2">2</option>
+                    <option value="1">1</option>
+                    <option value="0">Scratch (0)</option>
+                    <option value="+1">+1</option>
+                    <option value="+2">+2</option>
+                    <option value="+3">+3</option>
+                  </optgroup>
+                  <optgroup label="Pro">
+                    <option value="Pro">Pro</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Local / home course</label>
+                <input type="text" name="localCourse" placeholder="Where you play most often..." maxlength="80" autocomplete="off">
+                <input type="hidden" name="localCourseLat">
+                <input type="hidden" name="localCourseLon">
+              </div>
+              <div class="form-group">
+                <label>Who handed you a club?</label>
+                <input type="text" name="introducedBy" placeholder="e.g. My grandfather, a school coach..." maxlength="60">
+              </div>
             </div>
-            <div class="form-group">
-              <label>Profile Photo</label>
-              <div class="photo-upload" id="playerPhotoUpload">
-                <input type="file" accept="image/*" id="playerPhoto" onchange="handlePhotoUpload(this, 'player')" hidden>
-                <div class="photo-placeholder" onclick="document.getElementById('playerPhoto').click()">
-                  <span class="photo-icon">&#128247;</span>
-                  <span>Click to upload</span>
+
+            <!-- ============ STEP 6: DREAM ROUND ============ -->
+            <div class="wizard-step" data-step="6">
+              <div class="wizard-step-header">
+                <span class="wizard-step-emoji">&#10024;</span>
+                <h3 class="wizard-step-title">Your dream round</h3>
+                <p class="wizard-step-subtitle">If you could play with anyone, anywhere&hellip;</p>
+              </div>
+              <div class="form-group">
+                <label>Dream playing partner</label>
+                <input type="text" name="dreamPartner" placeholder="e.g. Tiger Woods, Seve, my dad..." maxlength="60">
+              </div>
+              <div class="form-group">
+                <label>Dream course</label>
+                <input type="text" name="dreamCourse" placeholder="e.g. Augusta National, St Andrews..." maxlength="80">
+              </div>
+            </div>
+
+            <!-- ============ STEP 7: STORY + PHOTO ============ -->
+            <div class="wizard-step" data-step="7">
+              <div class="wizard-step-header">
+                <span class="wizard-step-emoji">&#128221;</span>
+                <h3 class="wizard-step-title">The moment it clicked</h3>
+                <p class="wizard-step-subtitle">A short story, plus a photo if you have one.</p>
+              </div>
+              <div class="form-group">
+                <label>Your golf origin story <span class="required">*</span></label>
+                <textarea name="story" placeholder="Tell us about the moment you first picked up a golf club. What do you remember? What hooked you?" maxlength="280" rows="4"></textarea>
+                <span class="char-count"><span id="playerCharCount">0</span>/280</span>
+              </div>
+              <div class="form-group">
+                <label>Profile photo (optional)</label>
+                <div class="photo-upload" id="playerPhotoUpload">
+                  <input type="file" accept="image/*" id="playerPhoto" onchange="handlePhotoUpload(this, 'player')" hidden>
+                  <div class="photo-placeholder" onclick="document.getElementById('playerPhoto').click()">
+                    <span class="photo-icon">&#128247;</span>
+                    <span>Click to upload</span>
+                  </div>
+                  <img class="photo-preview" id="playerPhotoPreview" alt="Preview" style="display:none;" onclick="document.getElementById('playerPhoto').click()">
                 </div>
-                <img class="photo-preview" id="playerPhotoPreview" alt="Preview" style="display:none;" onclick="document.getElementById('playerPhoto').click()">
               </div>
             </div>
-            <div class="form-group">
-              <label>Card Color</label>
-              <div class="color-selector">
-                <label class="color-option"><input type="radio" name="cardColor" value="green" checked><span class="color-swatch color-green"></span></label>
-                <label class="color-option"><input type="radio" name="cardColor" value="navy"><span class="color-swatch color-navy"></span></label>
-                <label class="color-option"><input type="radio" name="cardColor" value="maroon"><span class="color-swatch color-maroon"></span></label>
-                <label class="color-option"><input type="radio" name="cardColor" value="black"><span class="color-swatch color-black"></span></label>
-                <label class="color-option"><input type="radio" name="cardColor" value="royal"><span class="color-swatch color-royal"></span></label>
-              </div>
+
+            <!-- Wizard navigation -->
+            <div class="wizard-nav">
+              <button type="button" class="btn btn-ghost-light" id="wizardBackBtn" onclick="wizardBack()" style="visibility:hidden;">&larr; Back</button>
+              <button type="button" class="btn btn-primary" id="wizardNextBtn" onclick="wizardNext()">Next &rarr;</button>
+              <button type="submit" class="btn btn-primary btn-lg" id="playerSubmitBtn" style="display:none;">
+                Create Your Player Card &rarr;
+              </button>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg btn-full" id="playerSubmitBtn">
-              Create Your Player Card &rarr;
-            </button>
           </form>
 
           <!-- Organization Form -->
@@ -716,6 +845,7 @@
   <script src="src/top100.js"></script>
   <script src="src/navigation.js"></script>
   <script src="src/forms.js"></script>
+  <script src="src/wizard.js"></script>
   <script src="src/celebrate.js"></script>
   <script src="src/community.js"></script>
   <script src="src/rounds.js"></script>

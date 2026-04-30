@@ -846,6 +846,173 @@ a {
   border: 1px solid var(--border);
 }
 
+/* ============================================
+   FORM WIZARD
+   ============================================ */
+.card-form-wizard {
+  padding: 28px 32px 24px;
+}
+
+.wizard-progress {
+  margin-bottom: 28px;
+}
+
+.wizard-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--cream-dark);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.wizard-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green-light), var(--green));
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wizard-progress-label {
+  font-family: var(--font-accent);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.wizard-step {
+  display: none;
+  animation: wizardStepIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wizard-step.active {
+  display: block;
+}
+
+@keyframes wizardStepIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.wizard-step-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.wizard-step-emoji {
+  display: inline-block;
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.wizard-step-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--green-dark);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.wizard-step-subtitle {
+  font-size: 14px;
+  color: var(--text-light);
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.wizard-nav .btn {
+  flex: 0 0 auto;
+}
+
+.wizard-nav #wizardNextBtn,
+.wizard-nav #playerSubmitBtn,
+.wizard-nav #orgSubmitBtn {
+  margin-left: auto;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Border style picker (Step 1) */
+.border-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.border-option {
+  cursor: pointer;
+}
+
+.border-option input {
+  display: none;
+}
+
+.border-swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  border: 2px solid transparent;
+  transition: var(--transition);
+  background: #fff;
+}
+
+.border-swatch.border-gold {
+  border-color: var(--gold);
+  color: var(--gold-dark);
+}
+
+.border-swatch.border-silver {
+  border-color: #b8b8b8;
+  color: #666;
+}
+
+.border-swatch.border-bronze {
+  border-color: #cd7f32;
+  color: #8b5a1a;
+}
+
+.border-option input:checked + .border-swatch {
+  background: rgba(201, 168, 76, 0.05);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+  transform: scale(1.04);
+}
+
+.border-option:hover .border-swatch {
+  transform: scale(1.02);
+}
+
+@media (max-width: 600px) {
+  .card-form-wizard {
+    padding: 20px 18px;
+  }
+  .wizard-step-title {
+    font-size: 22px;
+  }
+}
+
 .form-group {
   margin-bottom: 20px;
 }
