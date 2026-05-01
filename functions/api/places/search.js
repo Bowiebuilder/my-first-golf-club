@@ -81,15 +81,15 @@ export async function onRequestGet({ request, env }) {
   });
   if (country) params.set('country', country);
 
-  // For courses we bias the search query and request poi types
-  let query = q;
+  // For courses, don't over-restrict — Mapbox's POI DB is incomplete for golf.
+  // We let any place type through and re-rank in code so we get hits like
+  // "St Andrews" + "St Andrews Links" rather than nothing.
   if (type === 'course') {
-    query = q + ' golf';
-    params.set('types', 'poi');
+    params.set('types', 'poi,place,locality,neighborhood,address');
   }
 
   const mbUrl = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' +
-    encodeURIComponent(query) + '.json?' + params.toString();
+    encodeURIComponent(q) + '.json?' + params.toString();
 
   let upstream;
   try {
