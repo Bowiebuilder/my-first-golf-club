@@ -446,18 +446,6 @@ function _setupAllCourseAutocompletes() {
       return v;
     }
   });
-
-  // Local course — biased by nationality
-  _setupCourseAutocomplete({
-    inputName: 'localCourse',
-    latName: 'localCourseLat',
-    lonName: 'localCourseLon',
-    type: 'course',
-    getCountry: function() {
-      var nat = document.getElementById('nationalityInput');
-      return (nat && nat.value) || '';
-    }
-  });
 }
 
 // --- Social handle normalizer ---
