@@ -400,9 +400,11 @@ function _setupAvatarPicker() {
 // Show/hide avatar picker based on whether a photo is uploaded
 function _toggleAvatarPickerVisibility() {
   var group = document.getElementById('avatarPickerGroup');
+  var divider = document.getElementById('orDivider');
   if (!group) return;
   var hasPhoto = !!(window._playerPhotoFile || (typeof playerPhotoData !== 'undefined' && playerPhotoData));
   group.style.display = hasPhoto ? 'none' : '';
+  if (divider) divider.style.display = hasPhoto ? 'none' : 'flex';
   // If a photo was uploaded, clear any avatar selection
   if (hasPhoto) {
     var idHidden = document.getElementById('avatarIdHidden');

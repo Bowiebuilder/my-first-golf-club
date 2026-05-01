@@ -1073,23 +1073,47 @@ a {
 
 .avatar-picker-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 2px;
   margin-bottom: 14px;
 }
 
-.avatar-picker-or {
-  font-family: var(--font-accent);
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  color: var(--text-muted);
-  text-transform: uppercase;
+.avatar-picker-label {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
 }
 
-.avatar-picker-label {
-  font-weight: 600;
-  font-size: 14px;
+.avatar-picker-sublabel {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+/* OR divider between photo upload and avatar picker */
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.or-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.or-divider-text {
+  font-family: var(--font-accent);
+  font-size: 13px;
+  letter-spacing: 0.25em;
   color: var(--text);
+  font-weight: 700;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
 }
 
 .avatar-grid {
@@ -2033,19 +2057,11 @@ a {
   font-size: 9px;
 }
 
-/* Hover shimmer effect */
+/* Subtle border glow on hover */
 .golf-card:hover .card-front::before {
   opacity: 1;
-  background: linear-gradient(
-    135deg,
-    transparent 20%,
-    var(--card-border-color-soft) 30%,
-    var(--card-border-color) 50%,
-    var(--card-border-color-soft) 70%,
-    transparent 80%
-  );
-  border: 2px solid var(--card-border-color);
-  background-blend-mode: screen;
+  border-color: var(--card-border-color);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.06);
 }
 
 /* ============================================
