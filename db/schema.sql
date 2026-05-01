@@ -50,6 +50,10 @@ CREATE TABLE IF NOT EXISTS cards (
   local_course_lon REAL,
   dream_partner TEXT,
   dream_course TEXT,
+  social_instagram TEXT,
+  social_x TEXT,
+  social_facebook TEXT,
+  social_linkedin TEXT,
   -- Org-only fields
   org_type TEXT,
   signature_course TEXT,

@@ -950,6 +950,117 @@ a {
 }
 
 /* ============================================
+   Social link inputs (Step 8)
+   ============================================ */
+.social-input-group {
+  margin-bottom: 14px;
+}
+
+.social-input-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.social-input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.social-input-icon[data-network="instagram"] {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+.social-input-icon[data-network="x"]        { background: #000; }
+.social-input-icon[data-network="facebook"] { background: #1877f2; }
+.social-input-icon[data-network="linkedin"] { background: #0a66c2; }
+
+.social-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.social-input-wrap:focus-within {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(26, 94, 58, 0.1);
+}
+
+.social-input-prefix {
+  padding: 12px 4px 12px 14px;
+  font-size: 14px;
+  color: var(--text-muted);
+  background: var(--cream);
+  white-space: nowrap;
+  border-right: 1px solid var(--border);
+  user-select: none;
+}
+
+.social-input-wrap input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: transparent;
+  color: var(--text);
+}
+
+/* Social icons on the card back */
+.card-socials {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px auto 0;
+  position: relative;
+  z-index: 2;
+}
+
+.card-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--card-border-color);
+  text-decoration: none;
+  transition: var(--transition);
+  border: 1px solid var(--card-border-color);
+}
+
+.card-social-icon:hover {
+  background: var(--card-border-color);
+  color: #1a1a1a;
+  transform: translateY(-1px);
+}
+
+.card-grid .card-social-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.card-grid .card-social-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* ============================================
    Avatar picker (Step 7 — when no photo)
    ============================================ */
 .avatar-picker-group {

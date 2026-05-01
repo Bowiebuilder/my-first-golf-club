@@ -4,7 +4,7 @@
    Depends on: forms.js, storage.js
    ============================================ */
 
-var WIZARD_TOTAL_STEPS = 7;
+var WIZARD_TOTAL_STEPS = 8;
 var _currentStep = 1;
 
 // Country list with flag emoji + ISO code (sorted by name)
@@ -202,6 +202,10 @@ function _showStep(step) {
 
   var num = document.getElementById('wizardStepNum');
   if (num) num.textContent = step;
+  var totalNum = document.querySelector('.wizard-progress-label');
+  if (totalNum && !totalNum.textContent.match(/of ' + WIZARD_TOTAL_STEPS + '/)) {
+    // Already rendered in HTML, no-op
+  }
 
   var backBtn = document.getElementById('wizardBackBtn');
   if (backBtn) backBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
@@ -291,6 +295,45 @@ function wizardBack() {
 
 function _resetWizard() {
   _showStep(1);
+}
+
+// --- Social handle normalizer ---
+// Accepts pasted URLs and strips them to the handle so the card looks consistent
+function _setupSocialHandleInputs() {
+  function clean(value, network) {
+    if (!value) return '';
+    value = value.trim();
+    // Strip leading @ if any
+    value = value.replace(/^@+/, '');
+    // Strip protocol + domain prefixes for each network
+    var patterns = {
+      instagram: /^(https?:\/\/)?(www\.)?instagram\.com\//i,
+      x: /^(https?:\/\/)?(www\.)?(x|twitter)\.com\//i,
+      facebook: /^(https?:\/\/)?(www\.)?facebook\.com\//i,
+      linkedin: /^(https?:\/\/)?(www\.)?linkedin\.com\/(in\/|pub\/|company\/)?/i
+    };
+    var p = patterns[network];
+    if (p) value = value.replace(p, '');
+    // Strip trailing slashes/params
+    value = value.replace(/[\/?#].*$/, '');
+    return value;
+  }
+
+  ['Instagram', 'X', 'Facebook', 'Linkedin'].forEach(function(net) {
+    var inp = document.querySelector('input[name="social' + net + '"]');
+    if (!inp) return;
+    var key = net.toLowerCase();
+    inp.addEventListener('blur', function() {
+      var cleaned = clean(inp.value, key);
+      if (cleaned !== inp.value) {
+        inp.value = cleaned;
+      }
+      if (typeof renderPreviewCard === 'function') renderPreviewCard();
+    });
+    inp.addEventListener('input', function() {
+      if (typeof renderPreviewCard === 'function') renderPreviewCard();
+    });
+  });
 }
 
 // --- Avatar picker ---
@@ -395,6 +438,7 @@ function _initWizard() {
   _setupFullNameSync();
   _setupAvatarPicker();
   _toggleAvatarPickerVisibility();
+  _setupSocialHandleInputs();
   _showStep(1);
 
   // Re-toggle visibility when a photo is uploaded/removed

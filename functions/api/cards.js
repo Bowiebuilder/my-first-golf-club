@@ -89,6 +89,7 @@ export async function onRequestPost({ request, env }) {
         first_course_country = ?, first_course_lat = ?, first_course_lon = ?,
         local_course = ?, local_course_lat = ?, local_course_lon = ?,
         dream_partner = ?, dream_course = ?,
+        social_instagram = ?, social_x = ?, social_facebook = ?, social_linkedin = ?,
         org_type = ?, signature_course = ?, member_count = ?, holes = ?, founder = ?
       WHERE id = ?
     `).bind(
@@ -100,6 +101,8 @@ export async function onRequestPost({ request, env }) {
       body.firstCourseCountry || null, body.firstCourseLat || null, body.firstCourseLon || null,
       body.localCourse || null, body.localCourseLat || null, body.localCourseLon || null,
       body.dreamPartner || null, body.dreamCourse || null,
+      body.socialInstagram || null, body.socialX || null,
+      body.socialFacebook || null, body.socialLinkedin || null,
       body.orgType || null, body.signatureCourse || null, body.memberCount || null,
       body.holes || null, body.founder || null, user.card_id
     ).run();
@@ -120,9 +123,10 @@ export async function onRequestPost({ request, env }) {
       first_course_country, first_course_lat, first_course_lon,
       local_course, local_course_lat, local_course_lon,
       dream_partner, dream_course,
+      social_instagram, social_x, social_facebook, social_linkedin,
       org_type, signature_course, member_count, holes, founder
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     cardId, user.id, type, name, yearStarted, body.ageStarted || null,
     body.firstCourse || null, location, body.handicap || null,
@@ -133,6 +137,8 @@ export async function onRequestPost({ request, env }) {
     body.firstCourseCountry || null, body.firstCourseLat || null, body.firstCourseLon || null,
     body.localCourse || null, body.localCourseLat || null, body.localCourseLon || null,
     body.dreamPartner || null, body.dreamCourse || null,
+    body.socialInstagram || null, body.socialX || null,
+    body.socialFacebook || null, body.socialLinkedin || null,
     body.orgType || null, body.signatureCourse || null, body.memberCount || null,
     body.holes || null, body.founder || null
   ).run();
