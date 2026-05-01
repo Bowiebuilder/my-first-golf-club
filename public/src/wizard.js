@@ -263,12 +263,7 @@ function _validateCurrentStep() {
     else if (last) markValid(last);
   }
 
-  if (_currentStep === 7) {
-    // Story required
-    var story = stepEl.querySelector('textarea[name="story"]');
-    if (story && (!story.value || story.value.trim().length < 10)) markInvalid(story);
-    else if (story) markValid(story);
-  }
+  // Step 7 (story + photo) is fully optional — no required-field check
 
   if (firstInvalid) {
     firstInvalid.focus();
@@ -448,6 +443,33 @@ function _setupAllCourseAutocompletes() {
   });
 }
 
+// --- Story prompt chips (Step 7) ---
+function _setupStoryPrompts() {
+  var promptsEl = document.querySelector('.story-prompts');
+  var textarea = document.querySelector('#playerForm textarea[name="story"]');
+  if (!promptsEl || !textarea) return;
+
+  promptsEl.addEventListener('click', function(e) {
+    var btn = e.target.closest('.story-prompt');
+    if (!btn) return;
+    var starter = btn.dataset.prompt || '';
+    if (textarea.value.trim()) {
+      // If there's already content, append on a new line
+      var existing = textarea.value.replace(/\s+$/, '');
+      textarea.value = existing + '\n' + starter;
+    } else {
+      textarea.value = starter;
+    }
+    textarea.focus();
+    // Place cursor at end so they can keep typing
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    // Update char count + preview
+    var cc = document.getElementById('playerCharCount');
+    if (cc) cc.textContent = textarea.value.length;
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
+  });
+}
+
 // --- Social handle normalizer ---
 // Accepts pasted URLs and strips them to the handle so the card looks consistent
 function _setupSocialHandleInputs() {
@@ -593,6 +615,7 @@ function _initWizard() {
   _toggleAvatarPickerVisibility();
   _setupSocialHandleInputs();
   _setupAllCourseAutocompletes();
+  _setupStoryPrompts();
   _showStep(1);
 
   // Re-toggle visibility when a photo is uploaded/removed

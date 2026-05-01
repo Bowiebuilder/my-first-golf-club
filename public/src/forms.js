@@ -194,8 +194,9 @@ function _validateCardForm(form, data, type) {
     errors++;
   }
 
-  if (!data.story || data.story.trim().length < 10) {
-    _showFieldError(form, 'story', data.story ? 'Tell us a bit more - at least a couple of sentences' : (type === 'player' ? 'Tell us about how your golf journey began' : 'Tell us the founding story'));
+  // Story is optional for player cards. For org cards, still encourage a founding story.
+  if (type === 'org' && (!data.story || data.story.trim().length < 10)) {
+    _showFieldError(form, 'story', 'Tell us the founding story');
     errors++;
   }
 

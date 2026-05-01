@@ -70,8 +70,12 @@ export async function onRequestPost({ request, env }) {
   if (!body) return error('Invalid JSON body');
 
   const { type, name, yearStarted, story, location } = body;
-  if (!type || !name || !yearStarted || !story || !location) {
-    return error('Missing required fields: type, name, yearStarted, story, location');
+  // Story is required for org cards (founding story) but optional for player cards
+  if (!type || !name || !yearStarted || !location) {
+    return error('Missing required fields: type, name, yearStarted, location');
+  }
+  if (type === 'org' && !story) {
+    return error('Missing required field: story');
   }
 
   const db = env.DB;

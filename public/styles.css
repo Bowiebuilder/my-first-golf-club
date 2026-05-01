@@ -950,6 +950,34 @@ a {
 }
 
 /* ============================================
+   Story prompt chips (Step 7)
+   ============================================ */
+.story-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.story-prompt {
+  font-size: 12px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-body);
+}
+
+.story-prompt:hover {
+  border-color: var(--green);
+  color: var(--green-dark);
+  background: rgba(26, 94, 58, 0.04);
+}
+
+/* ============================================
    Social link inputs (Step 8)
    ============================================ */
 .social-input-group {

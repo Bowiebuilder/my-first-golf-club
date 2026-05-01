@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My First Golf Club - Where Every Golf Story Begins</title>
   <link rel="icon" type="image/png" href="logo.png?v=3">
-  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=22">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -371,20 +371,16 @@
               </div>
             </div>
 
-            <!-- ============ STEP 6: DREAM ROUND ============ -->
+            <!-- ============ STEP 6: BUCKET-LIST COURSE ============ -->
             <div class="wizard-step" data-step="6">
               <div class="wizard-step-header">
                 <span class="wizard-step-emoji">&#10024;</span>
-                <h3 class="wizard-step-title">Your dream round</h3>
-                <p class="wizard-step-subtitle">If you could play with anyone, anywhere&hellip;</p>
+                <h3 class="wizard-step-title">Your bucket-list course</h3>
+                <p class="wizard-step-subtitle">The one course you'd love to play one day.</p>
               </div>
               <div class="form-group">
-                <label>Dream playing partner</label>
-                <input type="text" name="dreamPartner" placeholder="e.g. Tiger Woods, Seve, my dad..." maxlength="60">
-              </div>
-              <div class="form-group">
-                <label>Dream course</label>
-                <input type="text" name="dreamCourse" placeholder="e.g. Augusta National, St Andrews..." maxlength="80">
+                <label>Bucket-list course <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(optional)</span></label>
+                <input type="text" name="dreamCourse" placeholder="e.g. Augusta National, St Andrews, Pebble Beach..." maxlength="80">
               </div>
             </div>
 
@@ -393,11 +389,16 @@
               <div class="wizard-step-header">
                 <span class="wizard-step-emoji">&#128221;</span>
                 <h3 class="wizard-step-title">The moment it clicked</h3>
-                <p class="wizard-step-subtitle">A short story, plus a photo if you have one.</p>
+                <p class="wizard-step-subtitle">A short memory, plus a photo if you have one. All optional.</p>
               </div>
               <div class="form-group">
-                <label>Your golf origin story <span class="required">*</span></label>
-                <textarea name="story" placeholder="Tell us about the moment you first picked up a golf club. What do you remember? What hooked you?" maxlength="280" rows="4"></textarea>
+                <label>Your golf origin story <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(optional)</span></label>
+                <div class="story-prompts" aria-label="Story starters">
+                  <button type="button" class="story-prompt" data-prompt="My first round was with ">My first round was with…</button>
+                  <button type="button" class="story-prompt" data-prompt="What I remember most is ">What I remember most is…</button>
+                  <button type="button" class="story-prompt" data-prompt="I got hooked when ">I got hooked when…</button>
+                </div>
+                <textarea name="story" placeholder="A sentence or two. Skip if you'd rather." maxlength="280" rows="4"></textarea>
                 <span class="char-count"><span id="playerCharCount">0</span>/280</span>
               </div>
               <div class="form-group">
@@ -960,24 +961,24 @@
   </footer>
 
   <!-- Module load order matters: dependencies first -->
-  <script src="src/storage.js?v=21"></script>
-  <script src="src/api.js?v=21"></script>
-  <script src="src/toasts.js?v=21"></script>
-  <script src="src/feed.js?v=21"></script>
-  <script src="src/auth.js?v=21"></script>
-  <script src="src/xp.js?v=21"></script>
-  <script src="src/badges.js?v=21"></script>
-  <script src="src/avatars.js?v=21"></script>
-  <script src="src/cards.js?v=21"></script>
-  <script src="src/top100.js?v=21"></script>
-  <script src="src/navigation.js?v=21"></script>
-  <script src="src/forms.js?v=21"></script>
-  <script src="src/wizard.js?v=21"></script>
-  <script src="src/celebrate.js?v=21"></script>
-  <script src="src/community.js?v=21"></script>
-  <script src="src/rounds.js?v=21"></script>
-  <script src="src/clubhouse.js?v=21"></script>
-  <script src="src/seed.js?v=21"></script>
-  <script src="src/init.js?v=21"></script>
+  <script src="src/storage.js?v=22"></script>
+  <script src="src/api.js?v=22"></script>
+  <script src="src/toasts.js?v=22"></script>
+  <script src="src/feed.js?v=22"></script>
+  <script src="src/auth.js?v=22"></script>
+  <script src="src/xp.js?v=22"></script>
+  <script src="src/badges.js?v=22"></script>
+  <script src="src/avatars.js?v=22"></script>
+  <script src="src/cards.js?v=22"></script>
+  <script src="src/top100.js?v=22"></script>
+  <script src="src/navigation.js?v=22"></script>
+  <script src="src/forms.js?v=22"></script>
+  <script src="src/wizard.js?v=22"></script>
+  <script src="src/celebrate.js?v=22"></script>
+  <script src="src/community.js?v=22"></script>
+  <script src="src/rounds.js?v=22"></script>
+  <script src="src/clubhouse.js?v=22"></script>
+  <script src="src/seed.js?v=22"></script>
+  <script src="src/init.js?v=22"></script>
 </body>
 </html>
