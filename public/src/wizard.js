@@ -297,6 +297,169 @@ function _resetWizard() {
   _showStep(1);
 }
 
+// ============================================
+// Mapbox course autocomplete (Step 4 + Step 5)
+// ============================================
+function _setupCourseAutocomplete(opts) {
+  // opts: { inputName, latName, lonName, getCountry, type }
+  var form = document.getElementById('playerForm');
+  if (!form) return;
+  var input = form.querySelector('input[name="' + opts.inputName + '"]');
+  var latInput = form.querySelector('input[name="' + opts.latName + '"]');
+  var lonInput = form.querySelector('input[name="' + opts.lonName + '"]');
+  if (!input) return;
+
+  // Wrap input + add a results dropdown
+  if (!input.parentElement.classList.contains('combobox')) {
+    var wrap = document.createElement('div');
+    wrap.className = 'combobox';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    var list = document.createElement('div');
+    list.className = 'combobox-list';
+    list.style.display = 'none';
+    wrap.appendChild(list);
+  }
+  var listEl = input.parentElement.querySelector('.combobox-list');
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function(ch) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
+    });
+  }
+
+  function clearGeo() {
+    if (latInput) latInput.value = '';
+    if (lonInput) lonInput.value = '';
+  }
+
+  function pick(result) {
+    input.value = result.name;
+    if (latInput) latInput.value = result.lat || '';
+    if (lonInput) lonInput.value = result.lon || '';
+    listEl.style.display = 'none';
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
+  }
+
+  function renderResults(results, queryText) {
+    if (!results.length) {
+      listEl.innerHTML = '<div class="combobox-empty">No matches &mdash; you can keep "' + escapeHtml(queryText) + '"</div>';
+    } else {
+      listEl.innerHTML = results.map(function(r) {
+        var loc = [r.city, r.region, r.country].filter(Boolean).join(', ');
+        return '<div class="combobox-item" data-id="' + escapeHtml(r.id) + '">' +
+          '<span class="combobox-course-name">' + escapeHtml(r.name) + '</span>' +
+          (loc ? '<span class="combobox-course-loc">' + escapeHtml(loc) + '</span>' : '') +
+          '</div>';
+      }).join('');
+    }
+    listEl.style.display = 'block';
+  }
+
+  // Cache so we can match a click back to its data
+  var lastResults = [];
+
+  // Debounced search
+  var debounceTimer = null;
+  var inflightController = null;
+
+  async function search(q) {
+    if (q.length < 2) { listEl.style.display = 'none'; return; }
+    if (inflightController) inflightController.abort();
+    inflightController = new AbortController();
+
+    var country = '';
+    if (typeof opts.getCountry === 'function') country = opts.getCountry() || '';
+
+    var url = '/api/places/search?q=' + encodeURIComponent(q) +
+      (country ? '&country=' + encodeURIComponent(country) : '') +
+      (opts.type ? '&type=' + opts.type : '');
+
+    try {
+      var res = await fetch(url, { signal: inflightController.signal });
+      if (!res.ok) {
+        listEl.style.display = 'none';
+        return;
+      }
+      var data = await res.json();
+      lastResults = data.results || [];
+      renderResults(lastResults, q);
+    } catch (e) {
+      // Aborted or network — ignore
+    }
+  }
+
+  input.addEventListener('input', function() {
+    clearGeo();
+    var q = input.value.trim();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() { search(q); }, 220);
+    if (typeof renderPreviewCard === 'function') renderPreviewCard();
+  });
+
+  input.addEventListener('focus', function() {
+    if (input.value.trim().length >= 2 && lastResults.length) {
+      listEl.style.display = 'block';
+    }
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') listEl.style.display = 'none';
+    if (e.key === 'Enter') {
+      var firstItem = listEl.querySelector('.combobox-item');
+      if (firstItem && listEl.style.display !== 'none') {
+        e.preventDefault();
+        var id = firstItem.dataset.id;
+        var match = lastResults.find(function(r) { return r.id === id; });
+        if (match) pick(match);
+      }
+    }
+  });
+
+  listEl.addEventListener('mousedown', function(e) {
+    var item = e.target.closest('.combobox-item');
+    if (!item) return;
+    e.preventDefault();
+    var id = item.dataset.id;
+    var match = lastResults.find(function(r) { return r.id === id; });
+    if (match) pick(match);
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!input.contains(e.target) && !listEl.contains(e.target)) {
+      listEl.style.display = 'none';
+    }
+  });
+}
+
+function _setupAllCourseAutocompletes() {
+  // First course — biased by Step 4 country (or nationality fallback)
+  _setupCourseAutocomplete({
+    inputName: 'firstCourse',
+    latName: 'firstCourseLat',
+    lonName: 'firstCourseLon',
+    type: 'course',
+    getCountry: function() {
+      var fcc = document.getElementById('firstCourseCountryInput');
+      var nat = document.getElementById('nationalityInput');
+      var v = (fcc && fcc.value) || (nat && nat.value) || '';
+      return v;
+    }
+  });
+
+  // Local course — biased by nationality
+  _setupCourseAutocomplete({
+    inputName: 'localCourse',
+    latName: 'localCourseLat',
+    lonName: 'localCourseLon',
+    type: 'course',
+    getCountry: function() {
+      var nat = document.getElementById('nationalityInput');
+      return (nat && nat.value) || '';
+    }
+  });
+}
+
 // --- Social handle normalizer ---
 // Accepts pasted URLs and strips them to the handle so the card looks consistent
 function _setupSocialHandleInputs() {
@@ -441,6 +604,7 @@ function _initWizard() {
   _setupAvatarPicker();
   _toggleAvatarPickerVisibility();
   _setupSocialHandleInputs();
+  _setupAllCourseAutocompletes();
   _showStep(1);
 
   // Re-toggle visibility when a photo is uploaded/removed
